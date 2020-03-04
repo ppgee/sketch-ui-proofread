@@ -1,8 +1,8 @@
 const SocketIO = require('socket.io')
 const ss = require('socket.io-stream')
 const fs = require('fs')
-const path = require('path')
 const ImgSchedule = require('./helper/schedule')
+const Constants = require('./constants')
 
 // socket 事件
 const SOCKETIO_EVENT = {
@@ -136,7 +136,8 @@ class HelperSocket {
           return
         }
 
-        const filePath = path.join(__dirname, `/temp/images/${name}`)
+        // 文件路径
+        const filePath = `${Constants.imgTempPath()}/${name}`
         // 加入定时删除任务中
         this.imgSchedule.addImgPath(filePath)
         // 接收文件结束后广播到插件

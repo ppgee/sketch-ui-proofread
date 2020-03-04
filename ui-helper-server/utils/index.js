@@ -1,4 +1,6 @@
 const OS = require('os')
+const fs = require('fs')
+const path = require('path')
 
 // 获取本地ip地址
 const findLocalIPAddress = () => {
@@ -20,6 +22,19 @@ const findLocalIPAddress = () => {
   return IPAddress
 }
 
+// 创建目录
+const mkdirImgPath = function (dirname) {
+  if (fs.existsSync(dirname)) {
+    return true;
+  } else {
+    if (mkdirImgPath(path.dirname(dirname))) {
+      fs.mkdirSync(dirname);
+      return true;
+    }
+  }
+}
+
 module.exports = {
-  findLocalIPAddress
+  findLocalIPAddress,
+  mkdirImgPath
 }

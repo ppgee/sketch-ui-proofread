@@ -69,6 +69,7 @@ const app = new Vue({
   methods: {},
   mounted() {
     Socket = io('http://192.168.2.149:3000?type=penguin&alias=sketch-penguin')
+    // Socket = io('http://192.168.3.224:3000?type=penguin&alias=sketch-penguin')
     // Socket = io('http://192.168.3.3:3000?type=penguin&alias=sketch-penguin')
 
     this.penguinName = `sketch-user-${Math.round((Math.random() * 1000))}`

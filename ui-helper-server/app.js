@@ -8,9 +8,14 @@ const bodyparser = require('koa-bodyparser')
 const logger = require('koa-logger')
 const Koa2CORS = require('koa2-cors')
 const ejsRender = require('koa-ejs');
+const Utils = require('./utils')
+const Constants = require('./constants')
 
 const index = require('./routes/index')
 const users = require('./routes/users')
+
+// 创建临时图片目录
+Utils.mkdirImgPath(Constants.imgTempPath())
 
 // error handler
 onerror(app)
