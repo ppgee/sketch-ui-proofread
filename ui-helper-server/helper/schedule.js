@@ -26,14 +26,22 @@ class ImgScheduler {
 
   // 删除图片
   deleteExpiryImg() {
-    if (this.imgPathList.length === 0) return
+    if (this.imgPathList.length === 0) {
+      console.log('目录图片为空')
+      return
+    }
     this.imgPathList = this.imgPathList.filter((imgInfo) => {
       const nowTime = (new Date()).valueOf()
 
       // 是否过期
       let isExpiry = nowTime >= imgInfo.expiryTime
-      isExpiry && fs.unlinkSync(imgInfo.path)
-      console.log(`图片 ${imgInfo.path}: ${isExpiry ? '已过期，已删除' : '未过期'}`)
+      try {
+        isExpiry && fs.unlinkSync(imgInfo.path)
+        console.log(`图片 ${imgInfo.path}: ${isExpiry ? '已过期，已删除' : '未过期'}`)
+      } catch (error) {
+        console.error(error)
+      }
+
       return !isExpiry
     })
   }

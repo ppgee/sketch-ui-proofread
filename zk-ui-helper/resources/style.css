@@ -28,7 +28,13 @@ input, textarea {
 }
 
 .container {
-  padding: 20px;
+  display: flex;
+  align-items: center;
+  padding: 10px;
+}
+
+.btn-group {
+  margin-left: 10px;
 }
 
 .upload-image {

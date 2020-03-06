@@ -12,7 +12,6 @@ const Utils = require('./utils')
 const Constants = require('./constants')
 
 const index = require('./routes/index')
-const users = require('./routes/users')
 
 // 创建临时图片目录
 Utils.mkdirImgPath(Constants.imgTempPath())
@@ -49,7 +48,6 @@ app.use(async (ctx, next) => {
 
 // routes
 app.use(index.routes(), index.allowedMethods())
-app.use(users.routes(), users.allowedMethods())
 
 // error-handling
 app.on('error', (err, ctx) => {

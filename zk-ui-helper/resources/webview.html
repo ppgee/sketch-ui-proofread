@@ -21,9 +21,14 @@
 <body>
   <div id="app">
     <div class="container">
-      <i-input v-model="penguinName" disabled>
-        <p slot="prepend" style="width: 64px">名称</p>
+      <i-input style="width: 220px;" ref='nameInput' :value="penguinName" :disabled='!editMode'>
+        <p slot="prepend" style="width: 32px">名称</p>
       </i-input>
+      <div class="btn-group">
+        <i-button v-if='editMode' :disabled='penguinName.length === 0' type='primary' @click='savePenguinName'>保存</i-button>
+        <i-button v-if='editMode' type='error' @click='cancelEdit(false)'>取消</i-button>
+        <i-button v-else type="primary" @click='toggleEdit(true)'>修改名称</i-button>
+      </div>
     </div>
     <div v-if="imgUrl">
       <img class="upload-image" :src="imgUrl" />

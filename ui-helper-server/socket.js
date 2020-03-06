@@ -14,7 +14,10 @@ const SOCKETIO_EVENT = {
   REGISTER_PENGUIN_SUCCESS: 'register-penguin-success',
   UPLOAD_IMAGE: 'upload-image',
   GET_CONNECTED_PENGUIN: 'get-connected-penguin',
-  SERVER_SEND_IMAGE: 'server-send-image'
+  SERVER_SEND_IMAGE: 'server-send-image',
+  RENAME_PENGUIN: 'rename-penguin',
+  RENAME_PENGUIN_SUCCESS: 'rename-penguin-success',
+  RENAME_PENGUIN_FAILURE: 'rename-penguin-failure'
 }
 
 class HelperSocket {
@@ -120,12 +123,35 @@ class HelperSocket {
 
         // 将注册好的插件返回给客户端
         this.broadcastPenguinListToClient()
+
+        // 回发成功注册名称
+        socket.emit(SOCKETIO_EVENT.REGISTER_PENGUIN_SUCCESS, penguinAlias)
       })
 
       // todo 注册客户端 暂时未用
       socket.on(SOCKETIO_EVENT.REGISTER_CLIENT, (clientAlias) => {
         console.log(clientAlias, ' 触发注册事件')
         socket.emit(SOCKETIO_EVENT.REGISTER_CLIENT_SUCCESS, '注册成功')
+      })
+
+      // 监听重命名事件
+      socket.on(SOCKETIO_EVENT.RENAME_PENGUIN, (newAlias, oldAlias) => {
+        // 取出socket id
+        const socketId = this.penguinAlias[oldAlias]
+        // 如果不存在socket id
+        if (!socketId) {
+          socket.emit(SOCKETIO_EVENT.RENAME_PENGUIN_FAILURE, '重命名失败：未找到设备连接标识')
+          return
+        }
+        // 删除旧别名
+        delete this.penguinAlias[oldAlias]
+        // 填充新别名
+        this.penguinAlias[newAlias] = socketId
+
+        socket.emit(SOCKETIO_EVENT.RENAME_PENGUIN_SUCCESS, newAlias)
+
+        // 将注册好的插件返回给客户端
+        this.broadcastPenguinListToClient()
       })
 
       // 等待设备传输图片

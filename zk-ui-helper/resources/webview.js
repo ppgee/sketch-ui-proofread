@@ -13,6 +13,9 @@
 //   document.getElementById('answer').innerHTML = `'Random number from the plugin: '${randomNumber} test ${test}`
 // }
 
+// 本地存储
+const NAME_STORAGE_KEY = 'penguin-alias'
+
 // socket 事件
 const SOCKETIO_EVENT = {
   DISCONNECTION: 'disconnect',
@@ -23,7 +26,10 @@ const SOCKETIO_EVENT = {
   REGISTER_PENGUIN_SUCCESS: 'register-penguin-success',
   UPLOAD_IMAGE: 'upload-image',
   GET_CONNECTED_PENGUIN: 'get-connected-penguin',
-  SERVER_SEND_IMAGE: 'server-send-image'
+  SERVER_SEND_IMAGE: 'server-send-image',
+  RENAME_PENGUIN: 'rename-penguin',
+  RENAME_PENGUIN_SUCCESS: 'rename-penguin-success',
+  RENAME_PENGUIN_FAILURE: 'rename-penguin-failure'
 }
 
 // sketch 通信事件
@@ -62,29 +68,58 @@ const app = new Vue({
   el: '#app',
   data() {
     return {
+      editMode: false, // 编辑状态
       imgUrl: '',
       penguinName: 'sketch-user'
     }
   },
-  methods: {},
-  mounted() {
-    Socket = io('http://192.168.2.149:3000?type=penguin&alias=sketch-penguin')
-    // Socket = io('http://192.168.3.224:3000?type=penguin&alias=sketch-penguin')
-    // Socket = io('http://192.168.3.3:3000?type=penguin&alias=sketch-penguin')
+  methods: {
+    // 保存名称
+    savePenguinName() {
+      const newPenguinName = this.$refs.nameInput.currentValue
 
-    this.penguinName = `sketch-user-${Math.round((Math.random() * 1000))}`
+      // 发送重命名事件
+      Socket.emit(SOCKETIO_EVENT.RENAME_PENGUIN, newPenguinName, this.penguinName)
+    },
+    // 取消编辑
+    cancelEdit() {
+      this.$refs.nameInput.currentValue = this.penguinName
+      this.toggleEdit(false)
+    },
+    toggleEdit(editMode) {
+      this.editMode = editMode
+    },
+    // 获取插件名称
+    getPenguinName() {
+      this.penguinName = localStorage.getItem(NAME_STORAGE_KEY) || `sketch-user-${Math.round((Math.random() * 1000))}`
+    },
+    // 保存插件名称
+    savePenguinNameToStorage(penguinName) {
+      this.penguinName = penguinName
+      localStorage.setItem(NAME_STORAGE_KEY, this.penguinName)
+    }
+  },
+  mounted() {
+    // Socket = io('http://192.168.2.149:3000?type=penguin&alias=sketch-penguin')
+    // Socket = io('http://192.168.3.224:3000?type=penguin&alias=sketch-penguin')
+    Socket = io('http://192.168.3.3:3000?type=penguin&alias=sketch-penguin')
 
     // 连接成功的事件
     Socket.on(SOCKETIO_EVENT.CONNECTION, () => {
       console.log('连接成功')
       sendMsg('连接成功')
 
+      // 获取插件名称
+      this.getPenguinName()
+
       Socket.emit(SOCKETIO_EVENT.REGISTER_PENGUIN, this.penguinName)
     })
 
     // 注册成功事件
-    Socket.on(SOCKETIO_EVENT.REGISTER_PENGUIN_SUCCESS, (msg) => {
+    Socket.on(SOCKETIO_EVENT.REGISTER_PENGUIN_SUCCESS, (penguinName) => {
       console.log('注册成功')
+      // 保存插件名称到本地存储中
+      this.savePenguinNameToStorage(penguinName)
       sendMsg('注册成功')
     })
 
@@ -119,6 +154,20 @@ const app = new Vue({
       } catch (error) {
         console.error(error)
       }
+    })
+
+    // 重命名成功
+    Socket.on(SOCKETIO_EVENT.RENAME_PENGUIN_SUCCESS, (penguinName) => {
+      console.log('重命名成功')
+      // 保存插件名称到本地存储中
+      this.savePenguinNameToStorage(penguinName)
+      this.toggleEdit(false)
+      sendMsg('重命名成功')
+    })
+
+    // 重命名失败
+    Socket.on(SOCKETIO_EVENT.RENAME_PENGUIN_FAILURE, (msg) => {
+      sendMsg(msg)
     })
 
     Socket.on(SOCKETIO_EVENT.DISCONNECTION, () => {

@@ -19,10 +19,12 @@
 <body>
   <div id="app">
     <div class="container">
-      <p>请先选择对应插件名称：</p>
-      <i-select v-model="selectedAlias" style="margin-bottom: 20px;width:260px">
-        <i-option v-for="(penguinId, alias) in penguinList" :value="alias" :key="penguinId">{{ alias }}</i-option>
-      </i-select>
+      <p>请先选择对应接收设备：</p>
+      <div class="device-info">
+        <i-select v-model="selectedAlias" style="margin-bottom: 20px;width:150px">
+          <i-option v-for="(penguinId, alias) in penguinList" :value="alias" :key="penguinId">{{ alias }}</i-option>
+        </i-select>
+      </div>
       <Upload type="drag" :before-upload="handleUpload" :action="uploadUrl">
         <div style="padding: 20px 0">
           <Icon type="ios-cloud-upload" size="52" style="color: #3399ff"></Icon>
@@ -30,11 +32,18 @@
         </div>
         <!-- <i-button icon="ios-cloud-upload-outline">Select the file to upload</i-button> -->
       </Upload>
-      <div style="padding: 10px 0;" v-if="file !== null">图片名称: {{ file.name }}
-        <Button type="text" @click="upload" :loading="loadingStatus">{{ loadingStatus ? 'Uploading ' + percent : '点击上传' }}</Button>
+      <div style="padding: 10px 0;" v-if="file !== null">
+        <div>图片名称: {{ file.name }}</div>
+        <div style="margin-top: 10px">
+          <i-progress v-if='loadingStatus' :percent="percent" :stroke-width="20" status="active" text-inside></i-progress>
+          <i-button v-else type="primary" @click="upload" long>点击上传</i-button>
+        </div>
       </div>
     </div>
-    <img class="preview-img" v-if='imgUrl' :src="imgUrl" />
+    <div v-if='imgUrl'>
+      <Divider>图片预览</Divider>
+      <img class="preview-img" :src="imgUrl" />
+    </div>
   </div>
   <script>
     var serverHost = '<%= host %>'
@@ -81,9 +90,9 @@
           }
         },
         upload() {
-          // 需要先选择插件名称
+          // 需要先选择接收设备
           if (!this.selectedAlias) {
-            this.$Message.info('请先选择插件名称');
+            this.$Message.info('请先选择接收设备');
             return
           }
 
@@ -102,7 +111,7 @@
           let fileSize = 0
           blobStream.on('data', (chunk) => {
             fileSize += chunk.length
-            this.percent = `${Math.floor(fileSize / this.file.size * 100)}%`
+            this.percent = Math.floor(fileSize / this.file.size * 100)
 
             // 如果传输完成，调用上传完成
             if (fileSize === this.file.size) {
@@ -114,6 +123,7 @@
         finishedUpload() {
           this.file = null;
           this.loadingStatus = false;
+          this.percent = 0;
           this.$Message.success('上传成功')
         }
       },

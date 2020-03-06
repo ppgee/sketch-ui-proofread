@@ -7,6 +7,10 @@ a {
   color: #00B7FF;
 }
 
+.device-info {
+  display: flex;
+}
+
 .preview-img {
   width: 100vw;
   height: auto;
