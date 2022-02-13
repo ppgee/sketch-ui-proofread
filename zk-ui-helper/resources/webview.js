@@ -16,6 +16,9 @@
 // 本地存储
 const NAME_STORAGE_KEY = 'penguin-alias'
 
+// socket ip
+const SOCKET_IP_ADDRESS = 'http://192.168.2.129:3000'
+
 // socket 事件
 const SOCKETIO_EVENT = {
   DISCONNECTION: 'disconnect',
@@ -102,7 +105,9 @@ const app = new Vue({
   mounted() {
     // Socket = io('http://192.168.2.149:3000?type=penguin&alias=sketch-penguin')
     // Socket = io('http://192.168.3.224:3000?type=penguin&alias=sketch-penguin')
-    Socket = io('http://192.168.3.3:3000?type=penguin&alias=sketch-penguin')
+    // Socket = io('http://192.168.2.5:3000?type=penguin&alias=sketch-penguin')
+    // Socket = io('http://192.168.3.3:3000?type=penguin&alias=sketch-penguin')
+    Socket = io(SOCKET_IP_ADDRESS + '?type=penguin&alias=sketch-penguin')
 
     // 连接成功的事件
     Socket.on(SOCKETIO_EVENT.CONNECTION, () => {
