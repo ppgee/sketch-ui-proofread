@@ -1,0 +1,47 @@
+{
+  "name": "ui-pr-helper",
+  "version": "1.0.0",
+  "description": "the extension for sketch",
+  "private": false,
+  "keywords": [
+    "sketch",
+    "vite",
+    "vue3"
+  ],
+  "author": "PGee",
+  "authorEmail": "283959070@qq.com",
+  "homepage": "https://github.com/ppgee/sketch-ui-helper#readme",
+  "license": "ISC",
+  "scripts": {
+    "dev": "vite",
+    "build": "vue-tsc --noEmit && vite build",
+    "preview": "vite preview"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ppgee/sketch-ui-helper.git"
+  },
+  "dependencies": {
+    "@sketch-hq/sketch-file-format-ts": "^6.2.0",
+    "element-plus": "^2.0.2",
+    "sketch-module-web-view": "^3.5.1",
+    "vue": "^3.2.25"
+  },
+  "devDependencies": {
+    "@types/events": "^3.0.0",
+    "@types/node": "^17.0.18",
+    "@vitejs/plugin-vue": "^2.2.0",
+    "rollup-plugin-copy": "^3.4.0",
+    "rollup-plugin-delete": "^2.0.0",
+    "sketch-types": "^1.4.3",
+    "typescript": "^4.5.4",
+    "unplugin-auto-import": "^0.6.0",
+    "unplugin-vue-components": "^0.17.18",
+    "vite": "^2.8.0",
+    "vite-plugin-inspect": "^0.3.14",
+    "vue-tsc": "^0.29.8"
+  },
+  "bugs": {
+    "url": "https://github.com/ppgee/sketch-ui-helper/issues"
+  }
+}

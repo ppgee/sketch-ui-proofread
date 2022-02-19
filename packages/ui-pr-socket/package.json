@@ -1,0 +1,50 @@
+{
+  "name": "ui-pr-socket",
+  "version": "1.0.0",
+  "description": "ui protoreading socket helper",
+  "keywords": [
+    "socket.io"
+  ],
+  "author": "PGee <283959070@qq.com>",
+  "homepage": "https://github.com/ppgee/sketch-ui-helper#readme",
+  "license": "ISC",
+  "main": "dist/ur-pr-socket-server.js",
+  "module": "dist/ur-pr-socket-server.mjs",
+  "typings": "dist/ur-pr-socket.d.ts",
+  "browser": {
+    "dist/ur-pr-socket-server.js": "dist/ur-pr-socket-client.js",
+    "dist/ur-pr-socket-server.mjs": "dist/ur-pr-socket-client.mjs"
+  },
+  "directories": {
+    "lib": "src",
+    "test": "__tests__"
+  },
+  "files": [
+    "src"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ppgee/sketch-ui-helper.git"
+  },
+  "scripts": {
+    "dev": "rollup -c -w",
+    "build": "rm -rf dist && rollup -c",
+    "test": "echo \"Error: run tests from root\" && exit 1"
+  },
+  "bugs": {
+    "url": "https://github.com/ppgee/sketch-ui-helper/issues"
+  },
+  "devDependencies": {
+    "@types/node": "^17.0.18",
+    "esbuild": "^0.14.21",
+    "rollup": "^2.67.2",
+    "rollup-plugin-dts": "^4.1.0",
+    "rollup-plugin-esbuild": "^4.8.2",
+    "rollup-plugin-terser": "^7.0.2",
+    "typescript": "^4.5.5"
+  },
+  "dependencies": {
+    "socket.io": "^4.4.1",
+    "socket.io-client": "^4.4.1"
+  }
+}

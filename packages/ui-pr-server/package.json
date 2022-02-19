@@ -1,0 +1,21 @@
+{
+  "name": "ui-pr-server",
+  "version": "0.1.0",
+  "scripts": {
+    "dev": "nuxi dev",
+    "build": "nuxi build",
+    "start": "node .output/server/index.mjs",
+    "generate": "export NITRO_PRESET=browser && npm run build"
+  },
+  "devDependencies": {
+    "nuxt3": "latest",
+    "sass": "^1.49.7",
+    "unplugin-auto-import": "^0.6.0",
+    "unplugin-vue-components": "^0.17.18"
+  },
+  "dependencies": {
+    "@element-plus/icons-vue": "^0.2.7",
+    "element-plus": "^2.0.2",
+    "ui-pr-socket": "1.0.0"
+  }
+}
