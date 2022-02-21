@@ -1,5 +1,5 @@
 import { defineNuxtPlugin } from '#app'
-import { SocketServer } from 'ui-pr-socket/dist/ui-pr-socket-server'
+import { SocketServer } from 'ui-pr-socket/server'
 import { writeFileSync } from 'fs'
 import { join } from 'path'
 

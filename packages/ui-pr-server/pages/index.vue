@@ -49,7 +49,7 @@
 
 <script setup lang="ts">
 import { TabGroup, TabList, Tab, TabPanel, TabPanels } from '@headlessui/vue'
-import { SocketClient } from 'ui-pr-socket/dist/ui-pr-socket-client'
+import { SocketClient, getUuid } from 'ui-pr-socket/client'
 
 let socketClient: SocketClient
 
@@ -68,7 +68,9 @@ const getRooms = (rooms: string[]) => {
 
 onMounted(() => {
   console.log('111')
+  window.navigator.userAgent
   socketClient = new SocketClient({
+    id: getUuid(`${Math.random() * 1000}${new Date().valueOf()}${Math.random() * 1000}`),
     url: window.location.origin,
     socketFrom: 'device',
     getRoomsFn: getRooms

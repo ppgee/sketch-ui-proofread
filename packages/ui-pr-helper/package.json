@@ -22,9 +22,15 @@
     "url": "git+https://github.com/ppgee/sketch-ui-helper.git"
   },
   "dependencies": {
+    "@headlessui/vue": "^1.5.0",
+    "@heroicons/vue": "^1.0.5",
     "@sketch-hq/sketch-file-format-ts": "^6.2.0",
-    "element-plus": "^2.0.2",
+    "@tailwindcss/aspect-ratio": "^0.4.0",
+    "@tailwindcss/forms": "^0.4.0",
+    "@tailwindcss/line-clamp": "^0.3.1",
+    "@tailwindcss/typography": "^0.5.2",
     "sketch-module-web-view": "^3.5.1",
+    "ui-pr-socket": "^1.0.0",
     "vue": "^3.2.25"
   },
   "devDependencies": {
@@ -34,10 +40,11 @@
     "rollup-plugin-copy": "^3.4.0",
     "rollup-plugin-delete": "^2.0.0",
     "sketch-types": "^1.4.3",
+    "tailwindcss": "^3.0.23",
     "typescript": "^4.5.4",
     "unplugin-auto-import": "^0.6.0",
     "unplugin-vue-components": "^0.17.18",
-    "vite": "^2.8.0",
+    "vite": "^2.8.4",
     "vite-plugin-inspect": "^0.3.14",
     "vue-tsc": "^0.29.8"
   },

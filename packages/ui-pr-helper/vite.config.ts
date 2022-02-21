@@ -4,7 +4,7 @@ import vue from '@vitejs/plugin-vue'
 import Inspect from 'vite-plugin-inspect'
 import AutoImport from 'unplugin-auto-import/vite'
 import Components from 'unplugin-vue-components/vite'
-import { ElementPlusResolver } from 'unplugin-vue-components/resolvers'
+import { HeadlessUiResolver } from 'unplugin-vue-components/resolvers'
 import Copy from 'rollup-plugin-copy'
 import Delete from 'rollup-plugin-delete'
 import manifest from './src/manifest'
@@ -48,7 +48,9 @@ export default defineConfig(({ mode }) => {
       }
     },
     server: {
-      open: '/webview/index.html'
+      open: '/webview/index.html',
+      host: true,
+      port: 4444,
     },
     build: {
       emptyOutDir: true,
@@ -69,10 +71,18 @@ export default defineConfig(({ mode }) => {
     plugins: [
       vue(),
       AutoImport({
-        resolvers: [ElementPlusResolver()],
+        include: [
+          /\.[tj]sx?$/, // .ts, .tsx, .js, .jsx
+          /\.vue$/, /\.vue\?vue/, // .vue
+        ],
+        imports: [
+          'vue'
+        ]
       }),
       Components({
-        resolvers: [ElementPlusResolver()],
+        resolvers: [
+          HeadlessUiResolver()
+        ]
       }),
       Copy({
         hook: 'closeBundle',
@@ -96,6 +106,6 @@ export default defineConfig(({ mode }) => {
         targets: [`${PLUGIN_PREFIX}/webview`]
       }),
       Inspect()
-    ]
+    ],
   }
 })

@@ -1,15 +1,14 @@
 import { io, Socket } from 'socket.io-client'
+import getUuid from './shared/uuid'
 import { SOCKET_EVENT } from './shared/events'
 import { CServerToClientEvents, CClientToServerEvents, SocketClientOptions, SocketFileOptions } from './types/socket'
 
-export class SocketClient {
+class SocketClient {
   io: Socket<CServerToClientEvents, CClientToServerEvents>
 
   constructor(options: SocketClientOptions) {
     const { url, socketFrom } = options
-    this.io = io(`${url}?socketFrom=${socketFrom}`, {
-      withCredentials: true
-    })
+    this.io = io(`${url}?socketFrom=${socketFrom}`)
 
     this.initSocket(options)
   }
@@ -30,11 +29,15 @@ export class SocketClient {
     }
 
     this.io.on(SOCKET_EVENT.CLIENT_CONNECTION, () => {
+      const { clientConnectedFn } = options
       console.log(`${this.io.id} connected!`)
+      clientConnectedFn && clientConnectedFn()
     })
 
     this.io.on(SOCKET_EVENT.DISCONNECTION, () => {
+      const { clientDisconnectedFn } = options
       console.log(`${this.io.id} disconnected`)
+      clientDisconnectedFn && clientDisconnectedFn()
     })
   }
   initDeviceSocket(options: SocketClientOptions) {
@@ -61,8 +64,13 @@ export class SocketClient {
     this.io.emit(SOCKET_EVENT.UPLOAD_IMAGE, options)
   }
 
-  createRoom(roomName: string) {
-    this.io.emit(SOCKET_EVENT.PLUGIN_REGISTER, roomName)
+  createRoom(options: { id: string, room: string }) {
+    this.io.emit(SOCKET_EVENT.PLUGIN_REGISTER, options)
   }
 
+}
+
+export {
+  getUuid,
+  SocketClient
 }

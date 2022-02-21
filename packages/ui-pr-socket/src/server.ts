@@ -2,25 +2,25 @@ import { Server, Socket } from 'socket.io'
 import { Server as HttpServer } from 'http'
 import { readFileSync } from 'fs'
 
+import getUuid from './shared/uuid'
 import { SOCKET_EVENT } from './shared/events'
 import { SClientToServerEvents, SInterServerEvents, SServerToClientEvents, SocketFirstReqQuery, SocketFrom, SocketData, SocketFileOptions } from './types/socket'
 
 type ServerSocket = Socket<SServerToClientEvents, SClientToServerEvents, SInterServerEvents, SocketData>
 
-export class SocketServer {
+class SocketServer {
   io: Server
-  rooms: string[]
+  rooms: { [key: string]: string }
   saveToImageFn: (params: SocketFileOptions) => Promise<string>
 
   constructor(server: HttpServer, options: { saveToImageFn: (params: SocketFileOptions) => Promise<string> }) {
     // 生成 io 实例
     this.io = new Server<ServerSocket>(server, {
       cors: {
-        methods: ['GET', 'POST'],
-        credentials: true
+        origin: '*'
       }
     })
-    this.rooms = []
+    this.rooms = {}
     // 服务器保存图片函数
     this.saveToImageFn = options.saveToImageFn
 
@@ -70,7 +70,7 @@ export class SocketServer {
     const { socketFrom, roomName, socketId } = options
 
     if (socketFrom === 'plugin') {
-      this.rooms.filter(room => room !== roomName)
+      delete this.rooms[roomName]
       this.io.socketsLeave(roomName)
     } else { // socketFrom === 'device'
       this.io.in(socketId).socketsLeave(roomName)
@@ -82,7 +82,7 @@ export class SocketServer {
   // 初始化设备端socket
   initDeviceSocket(socket: ServerSocket) {
     // 发送当前的插件列表
-    socket.emit(SOCKET_EVENT.CLIENT_GET_ROOMS, this.rooms)
+    socket.emit(SOCKET_EVENT.CLIENT_GET_ROOMS, Object.keys(this.rooms))
 
     socket.on(SOCKET_EVENT.UPLOAD_IMAGE, async (options) => {
       // 判断是否进入了对应的插件
@@ -107,29 +107,29 @@ export class SocketServer {
 
   // 初始化插件端socket
   initPluginSocket(socket: ServerSocket) {
-    socket.on(SOCKET_EVENT.PLUGIN_REGISTER, (roomName) => {
-      if (this.checkExistRoom(roomName)) {
+    socket.on(SOCKET_EVENT.PLUGIN_REGISTER, ({id, room}) => {
+      if (this.checkExistRoom(room)) {
         socket.emit(SOCKET_EVENT.PLUGIN_REGISTER_FAILURE, {
           msg: '名字已存在'
         })
         return
       }
 
-      this.rooms.push(roomName)
-      socket.join(roomName)
+      this.rooms[room] = id
+      socket.join(room)
       this.broadcastRoomsToClient()
-      socket.emit(SOCKET_EVENT.PLUGIN_REGISTER_SUCCESS, roomName)
+      socket.emit(SOCKET_EVENT.PLUGIN_REGISTER_SUCCESS, room)
     })
   }
 
-  checkExistRoom(roomName: string) {
-    return this.rooms.some(room => room === roomName)
+  checkExistRoom(room: string) {
+    return !!this.rooms[room]
   }
 
   // 将注册好的插件返回给客户端
   broadcastRoomsToClient() {
     try {
-      this.io.emit(SOCKET_EVENT.CLIENT_GET_ROOMS, this.rooms)
+      this.io.emit(SOCKET_EVENT.CLIENT_GET_ROOMS, Object.keys(this.rooms))
     } catch (error) {
       console.error(error)
     }
@@ -141,4 +141,9 @@ export class SocketServer {
     const fileBuffer = readFileSync(filepath)
     this.io.to(room).emit(SOCKET_EVENT.SERVER_SEND_IMAGE, fileBuffer)
   }
+}
+
+export {
+  getUuid,
+  SocketServer,
 }

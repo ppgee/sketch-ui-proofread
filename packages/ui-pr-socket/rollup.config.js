@@ -2,8 +2,6 @@ import dts from 'rollup-plugin-dts'
 import esbuild from 'rollup-plugin-esbuild'
 import { terser } from 'rollup-plugin-terser'
 
-const name = require('./package.json').name
-
 const bundle = (envType, config) => ({
   ...config,
   input: `src/${envType}.ts`,
@@ -16,7 +14,7 @@ export default ['server', 'client'].reduce((bundles, envType) => {
       plugins: [esbuild(), terser()],
       output: [
         {
-          file: `dist/${name}-${envType}.js`,
+          file: `${envType}/index.js`,
           format: 'es'
         }
       ],
@@ -24,7 +22,7 @@ export default ['server', 'client'].reduce((bundles, envType) => {
     bundle(envType, {
       plugins: [dts()],
       output: {
-        file: `dist/${name}-${envType}.d.ts`,
+        file: `${envType}/index.d.ts`,
         format: 'es',
       },
     }),

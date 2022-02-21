@@ -11,7 +11,7 @@ export interface SocketFileOptions {
 
 export interface SServerToClientEvents {
   [SOCKET_EVENT.UPLOAD_IMAGE]: (options: SocketFileOptions) => void
-  [SOCKET_EVENT.PLUGIN_REGISTER]: (roomName: string) => void
+  [SOCKET_EVENT.PLUGIN_REGISTER]: (options: { id: string, room: string }) => void
 }
 
 export interface SClientToServerEvents {
@@ -32,7 +32,7 @@ export interface CServerToClientEvents {
   [SOCKET_EVENT.SERVER_SEND_IMAGE]: (options: SocketFileOptions) => void
 }
 export interface CClientToServerEvents {
-  [SOCKET_EVENT.PLUGIN_REGISTER]: (roomName: string) => void
+  [SOCKET_EVENT.PLUGIN_REGISTER]: (options: { id: string, room: string }) => void
   [SOCKET_EVENT.UPLOAD_IMAGE]: (options: SocketFileOptions) => void
 }
 
@@ -44,11 +44,20 @@ export type SocketFirstReqQuery = {
   socketFrom: SocketFrom,
 }
 
-export type SocketClientOptions = {
+type SocketClientBaseOptions = {
+  id: string,
   url: string
-  socketFrom: SocketFrom
-  roomName?: string
   getRoomsFn?: (rooms: string[]) => void
   getRoomImgFn?: (options: SocketFileOptions) => void
   joinedRoomFn?: (roomName: string) => void
+  clientConnectedFn?: () => void
+  clientDisconnectedFn?: () => void
 }
+type SocketClientExtractOptions = {
+  socketFrom: Extract<SocketFrom, 'plugin'>
+  roomName: string
+} | {
+  socketFrom: Extract<SocketFrom, 'device'>
+  roomName?: string
+}
+export type SocketClientOptions = SocketClientBaseOptions & SocketClientExtractOptions
