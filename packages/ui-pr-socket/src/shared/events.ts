@@ -1,13 +1,23 @@
-export enum SOCKET_EVENT {
-  SERVER_CONNECTION = 'connection',
-  CLIENT_CONNECTION = 'connect',
+export enum SOCKET_EVENTS {
+  CONNECTION = 'connection',
   DISCONNECTION = 'disconnect',
-  UPLOAD_IMAGE = 'upload-image',
-  UPLOAD_IMAGE_FAILURE = 'upload-image-failure',
-  SERVER_SEND_IMAGE = 'server-send-image',
-  PLUGIN_REGISTER = 'plugin-register',
-  PLUGIN_REGISTER_SUCCESS = 'plugin-register-success',
-  PLUGIN_REGISTER_FAILURE = 'plugin-register-failure',
-  CLIENT_GET_ROOMS = 'client-get-plugins',
-  CLIENT_OUT_ROOM = 'client-out-room',
+  CLIENT_CONNECTION = 'connect'
+}
+
+export enum SERVER_EMIT_EVENTS {
+  SEND_IMAGE = 'server-send-image',
+  GET_IMAGE_FAIL = 'server-get-image-fail',
+  OUT_ROOM = 'server-out-room',
+  LIST_ROOMS = 'list-rooms',
+  CREATED_ROOM = 'created-room',
+  CREATED_ROOM_FAIL = 'created-room-fail',
+  JOINED_ROOM = 'joined-room',
+  JOIN_ROOM_FAIL = 'join-room-failure',
+}
+
+export enum CLIENT_EMIT_EVENTS {
+  CREATE_ROOM = 'create-room',
+  JOIN_ROOM = 'join-room',
+  SEND_IMAGE = 'client-send-image',
+  OUT_ROOM = 'client-out-room'
 }

@@ -67,8 +67,6 @@ const getRooms = (rooms: string[]) => {
 }
 
 onMounted(() => {
-  console.log('111')
-  window.navigator.userAgent
   socketClient = new SocketClient({
     id: getUuid(`${Math.random() * 1000}${new Date().valueOf()}${Math.random() * 1000}`),
     url: window.location.origin,

@@ -3,10 +3,8 @@ import { Server as HttpServer } from 'http'
 import { readFileSync } from 'fs'
 
 import getUuid from './shared/uuid'
-import { SOCKET_EVENT } from './shared/events'
-import { SClientToServerEvents, SInterServerEvents, SServerToClientEvents, SocketFirstReqQuery, SocketFrom, SocketData, SocketFileOptions } from './types/socket'
-
-type ServerSocket = Socket<SServerToClientEvents, SClientToServerEvents, SInterServerEvents, SocketData>
+import { SOCKET_EVENTS, SERVER_EMIT_EVENTS, CLIENT_EMIT_EVENTS } from './shared/events'
+import { ServerSocket, SocketFirstReqQuery, SocketFrom, SocketData, SocketFileOptions } from './types/socket'
 
 class SocketServer {
   io: Server
@@ -30,9 +28,9 @@ class SocketServer {
   // 初始化socket server
   initSocket() {
     // 监听socket新连接情况
-    this.io.on(SOCKET_EVENT.SERVER_CONNECTION, async (socket: ServerSocket) => {
+    this.io.on(SOCKET_EVENTS.CONNECTION, async (socket: ServerSocket) => {
       const query = socket.handshake.query as SocketFirstReqQuery
-      const { socketFrom } = query
+      const { socketFrom, id } = query
 
       console.log('server socket msg：', socketFrom)
 
@@ -53,42 +51,50 @@ class SocketServer {
       }
 
       // 失去连接
-      socket.on(SOCKET_EVENT.DISCONNECTION, () => {
+      socket.on(SOCKET_EVENTS.DISCONNECTION, () => {
         this.logoutSocket({
-          socketFrom: socketFrom,
           roomName: socket.rooms[0],
           socketId: socket.id
         })
-        console.log(`${socketFrom}: ${socket.id} 已下线`)
+        socket.emit(SERVER_EMIT_EVENTS.OUT_ROOM, {
+          msg: '失去连接下线'
+        })
+        console.log(`${socketFrom}: ${id} 已下线`)
       })
 
-      console.log(`${socketFrom}: ${socket.id} 加入 server 成功`)
+      console.log(`${socketFrom}: ${id} 加入 server 成功`)
     })
   }
 
-  logoutSocket(options: { socketFrom: SocketFrom; roomName: string; socketId: string }) {
-    const { socketFrom, roomName, socketId } = options
-
-    if (socketFrom === 'plugin') {
-      delete this.rooms[roomName]
-      this.io.socketsLeave(roomName)
-    } else { // socketFrom === 'device'
-      this.io.in(socketId).socketsLeave(roomName)
-    }
-
-    this.io.emit('CLIENT_OUT_ROOM')
+  logoutSocket(options: { roomName: string; socketId: string }) {
+    const { roomName, socketId } = options
+    this.io.in(socketId).socketsLeave(roomName)
   }
 
   // 初始化设备端socket
   initDeviceSocket(socket: ServerSocket) {
     // 发送当前的插件列表
-    socket.emit(SOCKET_EVENT.CLIENT_GET_ROOMS, Object.keys(this.rooms))
+    socket.emit(SERVER_EMIT_EVENTS.LIST_ROOMS, Object.keys(this.rooms))
 
-    socket.on(SOCKET_EVENT.UPLOAD_IMAGE, async (options) => {
+    socket.on(CLIENT_EMIT_EVENTS.JOIN_ROOM, ({ id, room }) => {
+      if (!this.checkExistRoom(room)) {
+        socket.emit(SERVER_EMIT_EVENTS.JOIN_ROOM_FAIL, { msg: '找不到插件！' })
+        return
+      }
+
+      if (this.checkJoinedRoom(socket, room)) {
+        socket.emit(SERVER_EMIT_EVENTS.JOIN_ROOM_FAIL, { msg: '已选定插件！' })
+        return
+      }
+
+      this.joinRoom(socket, room)
+    })
+
+    socket.on(CLIENT_EMIT_EVENTS.SEND_IMAGE, async (options) => {
       // 判断是否进入了对应的插件
       if (socket.rooms.size < 1) {
         console.log('找不到插件')
-        socket.emit(SOCKET_EVENT.UPLOAD_IMAGE_FAILURE, { msg: '找不到插件！' })
+        socket.emit(SERVER_EMIT_EVENTS.GET_IMAGE_FAIL, { msg: '找不到插件！' })
         return
       }
 
@@ -98,7 +104,7 @@ class SocketServer {
 
       const filepath = await this.saveToImageFn(options)
       if (!filepath) {
-        socket.emit(SOCKET_EVENT.UPLOAD_IMAGE_FAILURE, { msg: '服务器出错了！' })
+        socket.emit(SERVER_EMIT_EVENTS.GET_IMAGE_FAIL, { msg: '服务器出错了！' })
       }
       const [room,] = socket.rooms[0]
       this.broadcastTransferImage(room, filepath)
@@ -107,9 +113,18 @@ class SocketServer {
 
   // 初始化插件端socket
   initPluginSocket(socket: ServerSocket) {
-    socket.on(SOCKET_EVENT.PLUGIN_REGISTER, ({id, room}) => {
+    const { id } = socket.handshake.query as SocketFirstReqQuery
+
+    // 查看是否已经建立房间，如果是，直接加入房间即可
+    const room = this.checkRoomOwner(id)
+    if (room.length !== 0 && !this.checkJoinedRoom(socket, room)) {
+      this.joinRoom(socket, room)
+      return
+    }
+
+    socket.on(CLIENT_EMIT_EVENTS.CREATE_ROOM, ({ id, room }) => {
       if (this.checkExistRoom(room)) {
-        socket.emit(SOCKET_EVENT.PLUGIN_REGISTER_FAILURE, {
+        socket.emit(SERVER_EMIT_EVENTS.CREATED_ROOM_FAIL, {
           msg: '名字已存在'
         })
         return
@@ -118,18 +133,45 @@ class SocketServer {
       this.rooms[room] = id
       socket.join(room)
       this.broadcastRoomsToClient()
-      socket.emit(SOCKET_EVENT.PLUGIN_REGISTER_SUCCESS, room)
+      socket.emit(SERVER_EMIT_EVENTS.CREATED_ROOM, room)
     })
   }
 
-  checkExistRoom(room: string) {
+  joinRoom(socket: ServerSocket, room: string) {
+    if (this.hasMoreRoom(socket)) {
+      socket.emit(SERVER_EMIT_EVENTS.JOIN_ROOM_FAIL, { msg: '已选定插件，暂不支持多插件！' })
+      return
+    }
+    socket.join(room)
+    socket.emit(SERVER_EMIT_EVENTS.JOINED_ROOM, room)
+  }
+
+  hasMoreRoom(socket: ServerSocket): boolean {
+    return socket.rooms.size >= 1
+  }
+
+  checkExistRoom(room: string): boolean {
     return !!this.rooms[room]
+  }
+
+  checkJoinedRoom(socket: ServerSocket, room: string): boolean {
+    return socket.rooms.has(room)
+  }
+
+  checkRoomOwner(uid: string): string {
+    for (let index = 0; index < Object.keys(this.rooms).length; index++) {
+      const room = Object.keys(this.rooms)[index];
+      if (this.rooms[room] === uid) {
+        return room
+      }
+    }
+    return ''
   }
 
   // 将注册好的插件返回给客户端
   broadcastRoomsToClient() {
     try {
-      this.io.emit(SOCKET_EVENT.CLIENT_GET_ROOMS, Object.keys(this.rooms))
+      this.io.emit(SERVER_EMIT_EVENTS.LIST_ROOMS, Object.keys(this.rooms))
     } catch (error) {
       console.error(error)
     }
@@ -139,7 +181,7 @@ class SocketServer {
   broadcastTransferImage(room: string, filepath: string) {
     // 读取文件
     const fileBuffer = readFileSync(filepath)
-    this.io.to(room).emit(SOCKET_EVENT.SERVER_SEND_IMAGE, fileBuffer)
+    this.io.to(room).emit(SERVER_EMIT_EVENTS.SEND_IMAGE, fileBuffer)
   }
 }
 

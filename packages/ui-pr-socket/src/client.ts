@@ -1,10 +1,10 @@
 import { io, Socket } from 'socket.io-client'
 import getUuid from './shared/uuid'
-import { SOCKET_EVENT } from './shared/events'
-import { CServerToClientEvents, CClientToServerEvents, SocketClientOptions, SocketFileOptions } from './types/socket'
+import { SOCKET_EVENTS, SERVER_EMIT_EVENTS, CLIENT_EMIT_EVENTS } from './shared/events'
+import { ClientOnEvents, ClientEmitEvents, SocketClientOptions, SocketFileOptions } from './types/socket'
 
 class SocketClient {
-  io: Socket<CServerToClientEvents, CClientToServerEvents>
+  io: Socket<ClientOnEvents, ClientEmitEvents>
 
   constructor(options: SocketClientOptions) {
     const { url, socketFrom } = options
@@ -28,46 +28,64 @@ class SocketClient {
         break;
     }
 
-    this.io.on(SOCKET_EVENT.CLIENT_CONNECTION, () => {
+    this.io.on(SOCKET_EVENTS.CLIENT_CONNECTION, () => {
       const { clientConnectedFn } = options
-      console.log(`${this.io.id} connected!`)
+      // console.log(`${this.io.id} connected!`)
       clientConnectedFn && clientConnectedFn()
     })
 
-    this.io.on(SOCKET_EVENT.DISCONNECTION, () => {
+    this.io.on(SERVER_EMIT_EVENTS.JOINED_ROOM, (room) => {
+      options.joinRoomSuccess && options.joinRoomSuccess(room)
+    })
+
+    this.io.on(SERVER_EMIT_EVENTS.JOIN_ROOM_FAIL, (params) => {
+      options.joinedRoomFailure && options.joinedRoomFailure(params)
+    })
+
+    this.io.on(SOCKET_EVENTS.DISCONNECTION, () => {
       const { clientDisconnectedFn } = options
-      console.log(`${this.io.id} disconnected`)
+      // console.log(`${this.io.id} disconnected`)
       clientDisconnectedFn && clientDisconnectedFn()
     })
   }
   initDeviceSocket(options: SocketClientOptions) {
     const { getRoomsFn } = options
-    this.io.on(SOCKET_EVENT.CLIENT_GET_ROOMS, (rooms) => {
+    this.io.on(SERVER_EMIT_EVENTS.LIST_ROOMS, (rooms) => {
       getRoomsFn && getRoomsFn(rooms)
     })
   }
   initPluginSocket(options: SocketClientOptions) {
-    if (!options.roomName) {
+    if (!options.roomName || !(options.socketFrom === 'plugin')) {
       return
     }
-    this.io.on(SOCKET_EVENT.PLUGIN_REGISTER_SUCCESS, (roomName) => {
-      console.log(`${this.io.id} create room success`)
-      options.joinedRoomFn && options.joinedRoomFn(roomName)
+    this.io.on(SERVER_EMIT_EVENTS.CREATED_ROOM, (room) => {
+      // console.log(`${this.io.id} create room success`)
+      options.createRoomSuccess && options.createRoomSuccess(room)
     })
-    this.io.on(SOCKET_EVENT.SERVER_SEND_IMAGE, (params) => {
-      console.log(`${this.io.id} got image`)
-      options.getRoomImgFn && options.getRoomImgFn(params)
+    this.io.on(SERVER_EMIT_EVENTS.CREATED_ROOM_FAIL, (params) => {
+      options.createRoomFailure && options.createRoomFailure(params)
+    })
+    this.io.on(SERVER_EMIT_EVENTS.SEND_IMAGE, (params) => {
+      // console.log(`${this.io.id} got image`)
+      options.getServerImgFn && options.getServerImgFn(params)
     })
   }
 
   uploadImage(options: SocketFileOptions) {
-    this.io.emit(SOCKET_EVENT.UPLOAD_IMAGE, options)
+    this.io.emit(CLIENT_EMIT_EVENTS.SEND_IMAGE, options)
   }
 
   createRoom(options: { id: string, room: string }) {
-    this.io.emit(SOCKET_EVENT.PLUGIN_REGISTER, options)
+    this.io.emit(CLIENT_EMIT_EVENTS.CREATE_ROOM, options)
   }
 
+  joinRoom(option: { id: string, room: string }) {
+    this.io.emit(CLIENT_EMIT_EVENTS.JOIN_ROOM, option)
+  }
+
+  outRoom(option: { id: string, room: string }) {
+    this.io.emit(CLIENT_EMIT_EVENTS.OUT_ROOM, option)
+  }
 }
 
 export {
