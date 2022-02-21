@@ -38,6 +38,8 @@ export interface ServerEmitEvents {
   [SERVER_EMIT_EVENTS.OUT_ROOM]: ThrowMsgFunction
   [SERVER_EMIT_EVENTS.JOINED_ROOM]: RoomNameFunction
   [SERVER_EMIT_EVENTS.JOIN_ROOM_FAIL]: ThrowMsgFunction
+  [SERVER_EMIT_EVENTS.OUTED_ROOM]: BaseIdRoomFunction
+  [SERVER_EMIT_EVENTS.OUT_ROOM_FAIL]: ThrowMsgFunction
 }
 export interface SocketData {}
 export interface InterServerEvents {}
@@ -53,6 +55,8 @@ export interface ClientOnEvents {
   [SERVER_EMIT_EVENTS.CREATED_ROOM_FAIL]: ThrowMsgFunction
   [SERVER_EMIT_EVENTS.JOINED_ROOM]: RoomNameFunction
   [SERVER_EMIT_EVENTS.JOIN_ROOM_FAIL]: ThrowMsgFunction
+  [SERVER_EMIT_EVENTS.OUTED_ROOM]: BaseIdRoomFunction
+  [SERVER_EMIT_EVENTS.OUT_ROOM_FAIL]: ThrowMsgFunction
 }
 export interface ClientEmitEvents {
   [CLIENT_EMIT_EVENTS.CREATE_ROOM]: BaseIdRoomFunction
@@ -78,6 +82,8 @@ type SocketClientBaseOptions = {
   joinedRoomFailure?: ThrowMsgFunction
   clientConnectedFn?: EmptyFunction
   clientDisconnectedFn?: EmptyFunction
+  outRoomSuccess?: BaseIdRoomFunction
+  outRoomFailure?: ThrowMsgFunction
 }
 type SocketClientExtractOptions = {
   socketFrom: Extract<SocketFrom, 'plugin'>

@@ -10,17 +10,20 @@ class SocketServer {
   io: Server
   rooms: { [key: string]: string }
   saveToImageFn: (params: SocketFileOptions) => Promise<string>
+  updateRoomsToDB: (params: { action: 'add' | 'remove', key: string, value: string }) => Promise<{ [key: string]: string }>
 
-  constructor(server: HttpServer, options: { saveToImageFn: (params: SocketFileOptions) => Promise<string> }) {
+  constructor(server: HttpServer, options: { rooms: { [key: string]: string },saveToImageFn: (params: SocketFileOptions) => Promise<string>, updateRoomsToDB: (params: any) => Promise<{[key: string]: string}> }) {
     // 生成 io 实例
     this.io = new Server<ServerSocket>(server, {
       cors: {
         origin: '*'
       }
     })
-    this.rooms = {}
+    this.rooms = options.rooms || {}
     // 服务器保存图片函数
     this.saveToImageFn = options.saveToImageFn
+    // 更新db
+    this.updateRoomsToDB = options.updateRoomsToDB
 
     this.initSocket()
   }
@@ -49,6 +52,30 @@ class SocketServer {
         default:
           break;
       }
+
+      socket.on(CLIENT_EMIT_EVENTS.OUT_ROOM, async ({ id, room }) => {
+        try {
+          if (socketFrom === 'device') {
+            socket.leave(room)
+            return
+          }
+  
+          if (this.checkRoomOwnerByName(id, room)) {
+            this.io.socketsLeave(room)
+            await this.updateRoomsToDB({
+              action: 'remove',
+              key: room,
+              value: id
+            })
+          } else {
+            socket.leave(room)
+          }
+          
+          socket.emit(SERVER_EMIT_EVENTS.OUTED_ROOM, { id, room })
+        } catch (error) {
+          socket.emit(SERVER_EMIT_EVENTS.OUT_ROOM_FAIL, { msg: error })
+        }
+      })
 
       // 失去连接
       socket.on(SOCKET_EVENTS.DISCONNECTION, () => {
@@ -122,18 +149,29 @@ class SocketServer {
       return
     }
 
-    socket.on(CLIENT_EMIT_EVENTS.CREATE_ROOM, ({ id, room }) => {
-      if (this.checkExistRoom(room)) {
-        socket.emit(SERVER_EMIT_EVENTS.CREATED_ROOM_FAIL, {
-          msg: '名字已存在'
+    socket.on(CLIENT_EMIT_EVENTS.CREATE_ROOM, async ({ id, room }) => {
+      try {
+        if (this.checkExistRoom(room)) {
+          socket.emit(SERVER_EMIT_EVENTS.CREATED_ROOM_FAIL, {
+            msg: '名字已存在'
+          })
+          return
+        }
+  
+        this.rooms[room] = id
+        socket.join(room)
+        socket.emit(SERVER_EMIT_EVENTS.CREATED_ROOM, room)
+        await this.updateRoomsToDB({
+          action: 'add',
+          key: room,
+          value: id
         })
-        return
+        this.broadcastRoomsToClient()
+      } catch (error) {
+        socket.emit(SERVER_EMIT_EVENTS.CREATED_ROOM_FAIL, {
+          msg: '服务器异常'
+        })
       }
-
-      this.rooms[room] = id
-      socket.join(room)
-      this.broadcastRoomsToClient()
-      socket.emit(SERVER_EMIT_EVENTS.CREATED_ROOM, room)
     })
   }
 
@@ -166,6 +204,16 @@ class SocketServer {
       }
     }
     return ''
+  }
+
+  checkRoomOwnerByName(uid: string, room: string): boolean {
+    for (let index = 0; index < Object.keys(this.rooms).length; index++) {
+      const currRoom = Object.keys(this.rooms)[index];
+      if (currRoom === room && this.rooms[room] === uid) {
+        return true
+      }
+    }
+    return false
   }
 
   // 将注册好的插件返回给客户端

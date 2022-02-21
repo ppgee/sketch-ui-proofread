@@ -13,6 +13,8 @@ export enum SERVER_EMIT_EVENTS {
   CREATED_ROOM_FAIL = 'created-room-fail',
   JOINED_ROOM = 'joined-room',
   JOIN_ROOM_FAIL = 'join-room-failure',
+  OUTED_ROOM = 'outed-room',
+  OUT_ROOM_FAIL = 'out-room-fail'
 }
 
 export enum CLIENT_EMIT_EVENTS {

@@ -68,7 +68,7 @@ const getRooms = (rooms: string[]) => {
 
 onMounted(() => {
   socketClient = new SocketClient({
-    id: getUuid(`${Math.random() * 1000}${new Date().valueOf()}${Math.random() * 1000}`),
+    id: getUuid(),
     url: window.location.origin,
     socketFrom: 'device',
     getRoomsFn: getRooms

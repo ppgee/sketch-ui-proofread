@@ -85,7 +85,11 @@ let tabList = ref([
 ])
 
 // 创建socket信息
-let { storeSocketInfo, createSocketConnection } = useSocket()
+let {
+  isJoined,
+  storeSocketInfo,
+  createSocketConnection
+} = useSocket()
 
 let selectedTab = ref(!storeSocketInfo.id ? TAB_MAP.INFO : TAB_MAP.FUNC)
 let isDialogOpen = ref<boolean>(!storeSocketInfo.id)
@@ -94,7 +98,7 @@ const closeDialog = () => {
   selectedTab.value = TAB_MAP.INFO
 }
 
-const buttonDisabled = computed(() => !storeSocketInfo.server || !storeSocketInfo.room)
+const buttonDisabled = computed(() => isJoined.value || !storeSocketInfo.server || !storeSocketInfo.room)
 </script>
 
 <style lang="scss">
