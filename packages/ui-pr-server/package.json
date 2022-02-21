@@ -8,14 +8,20 @@
     "generate": "export NITRO_PRESET=browser && npm run build"
   },
   "devDependencies": {
+    "@nuxtjs/tailwindcss": "^5.0.0-4",
+    "autoprefixer": "^10.4.2",
     "nuxt3": "latest",
+    "postcss": "^8.4.6",
     "sass": "^1.49.7",
-    "unplugin-auto-import": "^0.6.0",
-    "unplugin-vue-components": "^0.17.18"
+    "sass-loader": "^12.6.0"
   },
   "dependencies": {
-    "@element-plus/icons-vue": "^0.2.7",
-    "element-plus": "^2.0.2",
+    "@headlessui/vue": "^1.5.0",
+    "@heroicons/vue": "^1.0.5",
+    "@tailwindcss/aspect-ratio": "^0.4.0",
+    "@tailwindcss/forms": "^0.4.0",
+    "@tailwindcss/line-clamp": "^0.3.1",
+    "@tailwindcss/typography": "^0.5.2",
     "ui-pr-socket": "1.0.0"
   }
 }
