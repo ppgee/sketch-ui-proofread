@@ -9,7 +9,13 @@ class SocketClient {
 
   constructor(options: SocketClientOptions) {
     const { url, socketFrom, id } = options
-    this.io = io(`${url}?socketFrom=${socketFrom}${id ? `&id=${id}` : ''}`)
+    this.io = io(`${url}`, {
+      reconnectionDelayMax: 10000,
+      query: {
+        id,
+        socketFrom,
+      }
+    })
 
     this.initSocket(options)
   }

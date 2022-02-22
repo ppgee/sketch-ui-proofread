@@ -1,5 +1,6 @@
 export enum SOCKET_EVENTS {
   CONNECTION = 'connection',
+  DISCONNECTING = 'disconnecting',
   DISCONNECTION = 'disconnect',
   CLIENT_CONNECTION = 'connect'
 }

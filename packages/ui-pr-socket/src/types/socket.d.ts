@@ -2,6 +2,7 @@ import { Socket } from "socket.io"
 import { SOCKET_EVENTS, SERVER_EMIT_EVENTS, CLIENT_EMIT_EVENTS } from "../shared/events"
 
 type EmptyFunction = () => void
+type ErrorReasonFunction = (reason) => void
 type BaseSocketFunction = (socket: ServerSocket) => void
 type BaseIdRoomFunction = (options: { id: string, room: string }) => void
 type ThrowMsgFunction = (params: SocketThrowMsg) => void
@@ -58,6 +59,7 @@ export interface InterServerEvents {}
 export interface ServerOnEvents extends ClientEmitEvents {
   [SOCKET_EVENTS.CONNECTION]: BaseSocketFunction
   [SOCKET_EVENTS.DISCONNECTION]: EmptyFunction
+  [SOCKET_EVENTS.DISCONNECTING]: ErrorReasonFunction
 }
 
 export interface ClientOnEvents extends ServerEmitEvents {

@@ -8,12 +8,12 @@
   "author": "PGee <283959070@qq.com>",
   "homepage": "https://github.com/ppgee/sketch-ui-helper#readme",
   "license": "ISC",
-  "main": "dist/ur-pr-socket-server.js",
-  "module": "dist/ur-pr-socket-server.mjs",
-  "typings": "dist/ur-pr-socket.d.ts",
+  "main": "server/ur-pr-socket.js",
+  "module": "server/ur-pr-socket.mjs",
+  "typings": "server/ur-pr-socket.d.ts",
   "browser": {
-    "dist/ur-pr-socket-server.js": "dist/ur-pr-socket-client.js",
-    "dist/ur-pr-socket-server.mjs": "dist/ur-pr-socket-client.mjs"
+    "server/ur-pr-socket.js": "client/ur-pr-socket.js",
+    "server/ur-pr-socket.mjs": "client/ur-pr-socket.mjs"
   },
   "directories": {
     "lib": "src",

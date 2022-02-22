@@ -72,6 +72,11 @@ export default function useSocket() {
     })
   }
 
+  onBeforeUnmount(() => {
+    console.log('客户端主动下线')
+    socketClient.io.disconnect()
+  })
+
   return {
     isJoined,
     socketLoading,

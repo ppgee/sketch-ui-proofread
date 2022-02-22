@@ -35,8 +35,6 @@ class SocketServer {
       const query = socket.handshake.query as SocketFirstReqQuery
       const { socketFrom, id } = query
 
-      console.log('server socket msg：', socketFrom)
-
       // 如果不存在直接退出
       if (!socketFrom) {
         return
@@ -80,18 +78,24 @@ class SocketServer {
         }
       })
 
-      // 失去连接
-      socket.on(SOCKET_EVENTS.DISCONNECTION, () => {
+      // 客户端失去连接
+      socket.on(SOCKET_EVENTS.DISCONNECTING, (reason) => {
+        console.log(`${socketFrom}: ${id} 下线了`)
+        console.log(`下线原因：${reason}`)
         this.logoutSocket({
           id,
           socketFrom,
           roomName: socket.rooms[0],
           socketId: socket.id
         })
-        socket.emit(SERVER_EMIT_EVENTS.OUT_ROOM, {
-          msg: '失去连接下线'
-        })
-        console.log(`${socketFrom}: ${id} 已下线`)
+      })
+
+      // 失去连接
+      socket.on(SOCKET_EVENTS.DISCONNECTION, () => {
+        console.log(`${socketFrom}: ${id} 失去连接`)
+        // socket.emit(SERVER_EMIT_EVENTS.OUT_ROOM, {
+        //   msg: '失去连接下线'
+        // })
       })
 
       console.log(`${socketFrom}: ${id} 加入 server 成功`)
@@ -161,25 +165,36 @@ class SocketServer {
     const { id } = socket.handshake.query as SocketFirstReqQuery
 
     // 查看是否已经建立房间，如果是，直接加入房间即可
-    const room = this.checkRoomOwner(id)
-    if (room.length !== 0 && !this.checkJoinedRoom(socket, room)) {
-      this.joinRoom(socket, room)
-      // 如果是插件端，需要更新房间状态
-      this.rooms = await this.updateRoomsToDB({
-        action: 'update',
-        key: room,
-        value: {
-          id,
-          online: true
-        }
-      })
-      this.broadcastRoomsToClient()
+    try {
+      const room = this.checkRoomOwner(id)
+      if (room.length !== 0 && !this.checkJoinedRoom(socket, room)) {
+        this.joinRoom(socket, room)
+        // 如果是插件端，需要更新房间状态
+        this.rooms = await this.updateRoomsToDB({
+          action: 'update',
+          key: room,
+          value: {
+            id,
+            online: true
+          }
+        })
+        this.broadcastRoomsToClient()
 
-      return
+        return
+      }
+    } catch (error) {
+      console.log('error', error)
     }
 
     socket.on(CLIENT_EMIT_EVENTS.CREATE_ROOM, async ({ id, room }) => {
       try {
+        if (this.checkRoomOwnerByName(id, room) && this.checkJoinedRoom(socket, room)) {
+          socket.emit(SERVER_EMIT_EVENTS.CREATED_ROOM_FAIL, {
+            msg: '已加入连接'
+          })
+          return
+        }
+
         if (this.checkExistRoom(room)) {
           socket.emit(SERVER_EMIT_EVENTS.CREATED_ROOM_FAIL, {
             msg: '名字已存在'

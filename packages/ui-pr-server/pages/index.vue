@@ -133,6 +133,11 @@ onMounted(() => {
     getRoomsFn: getRooms
   })
 })
+
+onBeforeUnmount(() => {
+  console.log('客户端主动下线')
+  socketClient.io.disconnect()
+})
 </script>
 
 <style lang="scss">
