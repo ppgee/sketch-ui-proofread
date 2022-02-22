@@ -1,6 +1,14 @@
-import { ref } from 'vue'
+import { ref, reactive, toRaw } from 'vue'
 import { SocketClient } from 'ui-pr-socket/client'
-import getUuid from "../../utils/uuid"
+
+const getUuid = (a: string = ''): string => (
+  a ? ((Number(a) ^ Math.random() * 16) >> Number(a) / 4).toString(16)
+    : (`${1e7}-${1e3}-${4e3}-${8e3}-${1e11}`).replace(/[018]/g, getUuid)
+);
+
+function validateHTTP(str: string) {
+  return str.indexOf("http://") == 0 || str.indexOf("https://") == 0
+}
 
 const SOCKET_INFO_KEY = 'socket-info'
 
@@ -54,7 +62,7 @@ export default function useSocket() {
 
     socketClient = new SocketClient({
       id: storeSocketInfo.id,
-      url: server,
+      url: validateHTTP(server) ? server : `http://${server}`,
       socketFrom: 'plugin',
       roomName: room,
       clientConnectedFn: () => socketClient.createRoom({ id: storeSocketInfo.id, room }),

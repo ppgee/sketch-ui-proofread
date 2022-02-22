@@ -2,7 +2,6 @@
   "compilerOptions": {
     "target": "esnext",
     "skipLibCheck": true,
-    "allowSyntheticDefaultImports": true,
     "useDefineForClassFields": true,
     "module": "esnext",
     "moduleResolution": "node",

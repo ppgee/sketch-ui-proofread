@@ -4,6 +4,13 @@ import { writeFileSync } from 'fs'
 import { join } from 'path'
 import { Low, JSONFile } from 'lowdb'
 
+type RoomList = {
+  [key: string]: {
+    id: string,
+    online: boolean
+  }
+}
+
 // 图片路径
 function imgTempPath() {
   return join(process.cwd(), `/temp/images`)
@@ -13,7 +20,7 @@ function imgTempPath() {
 function dbPath() {
   return join(process.cwd(), 'db.json')
 }
-const adapter = new JSONFile<{ rooms: { [key: string]: string } }>(dbPath())
+const adapter = new JSONFile<{ rooms: RoomList }>(dbPath())
 const db = new Low(adapter)
 
 async function saveToImage(params: any) {
@@ -24,7 +31,7 @@ async function saveToImage(params: any) {
   return filepath
 }
 
-async function updateRoomsToDB(params: { action: 'add' | 'remove', key: string, value: string }): Promise<{ [key: string]: string }> {
+async function updateRoomsToDB(params: { action: 'add' | 'remove' | 'update', key: keyof RoomList, value: RoomList[keyof RoomList] }): Promise<RoomList> {
   try {
     await db.read()
     db.data ||= { rooms: {} }
@@ -34,17 +41,18 @@ async function updateRoomsToDB(params: { action: 'add' | 'remove', key: string, 
       db.data.rooms[key] = value
     } else if (action === 'remove') {
       delete db.data.rooms[key]
+    } else if (action === 'update') {
+      db.data.rooms[key] = value
     }
 
     await db.write()
-
     return db.data.rooms
   } catch (error) {
     throw error
   }
 }
 
-async function readRoomsToServer(): Promise<{ [key: string]: string }> {
+async function readRoomsToServer(): Promise<RoomList> {
   try {
     await db.read()
     db.data ||= { rooms: {} }

@@ -15,6 +15,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vue-tsc --noEmit && vite build",
+    "build:watch": "vue-tsc --noEmit && vite build --mode dev --watch",
     "preview": "vite preview"
   },
   "repository": {

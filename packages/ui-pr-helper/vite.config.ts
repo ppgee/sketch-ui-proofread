@@ -54,19 +54,22 @@ export default defineConfig(({ mode }) => {
     },
     build: {
       emptyOutDir: true,
+      minify: false,
       outDir: resolve(__dirname, PLUGIN_PREFIX),
       rollupOptions: {
         input: inputOptions,
         output: {
           chunkFileNames: 'Resources/[name].js',
           entryFileNames: getEntryFileNames,
-          assetFileNames: 'Resources/[ext]/[name].[ext]'
+          assetFileNames: 'Resources/[ext]/[name].[ext]',
+          format: 'commonjs',
+          manualChunks: {}
         },
         external: [
           'sketch',
           'sketch/dom'
         ]
-      }
+      },
     },
     plugins: [
       vue(),
@@ -91,7 +94,7 @@ export default defineConfig(({ mode }) => {
             src: `${PLUGIN_PREFIX}/webview/index.html`,
             dest: `${PLUGIN_PREFIX}/Resources`,
             rename: 'webview.html',
-            transform: (contents) => contents.toString().replace(/\/Resources/g, '')
+            transform: (contents) => contents.toString().replace(/\/Resources/g, '').replace(/type="module" crossorigin/g, 'defer')
           },
           {
             src: resolve(__dirname, 'src/manifest.ts'),

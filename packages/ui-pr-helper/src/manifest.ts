@@ -1,4 +1,4 @@
-const { author, authorEmail, version } = require('../package.json')
+const { author, authorEmail, version, description } = require('../package.json')
 const PLUGIN_IDENT = 'ui-pr-helper'
 const IDENTIFIERS = {
   PLUGIN_SOURCE: PLUGIN_IDENT,
@@ -12,15 +12,14 @@ const manifest = {
   author,
   authorEmail,
   version,
-  "compatibleVersion": "3",
-  "bundleVersion": 1,
+  description,
+  "compatibleVersion": "52.1",
   "disableCocoaScriptPreprocessor": true,
-  "appcast": "https://raw.githubusercontent.com//master/.appcast.xml",
   "commands": [
     {
       "name": "start helper",
       "identifier": IDENTIFIERS.COMMAND_START_HELPER,
-      "script": "./main.ts",
+      "script": "./__my-command.js",
       "handlers": {
         "run": "onRun",
         "actions": {

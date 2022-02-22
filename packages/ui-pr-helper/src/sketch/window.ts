@@ -3,8 +3,12 @@ import BrowserWindow from "sketch-module-web-view"
 import { Document } from "sketch/dom"
 import { SKETCH_EVENT } from "../bridge/event"
 import { getWebviewUrl } from "../bridge/window"
-import getUuid from "../utils/uuid"
 import { getSelectedPage, initImageLayer } from "./dom"
+
+const getUuid = (a: string = ''): string => (
+  a ? ((Number(a) ^ Math.random() * 16) >> Number(a) / 4).toString(16)
+    : (`${1e7}-${1e3}-${4e3}-${8e3}-${1e11}`).replace(/[018]/g, getUuid)
+);
 
 let helpWindowList: HelpWindow[] = []
 
@@ -20,7 +24,6 @@ export class HelpWindow {
       identifier: this.windowIdentifier,
       width: __IPHONE6_WIDTH__,
       height: __IPHONE6_HEIGHT__,
-      show: false
     })
 
     this.init()
@@ -47,7 +50,11 @@ export class HelpWindow {
 
   // 打印消息
   pushMessage(text: string, document?: Document | undefined) {
-    UI.message(text, document)
+    if (document) {
+      UI.message(text, document)
+      return
+    }
+    UI.message(text)
   }
 
   destroy() {
@@ -61,13 +68,18 @@ export class HelpWindow {
 
     // print a message web the page loads
     // @ts-ignore
-    webContents.on(SKETCH_EVENT.WEBVIEW_DID_LOAD, this.pushMessage.bind('UI loaded!'))
+    webContents.on(SKETCH_EVENT.WEBVIEW_DID_LOAD, () => {
+      this.pushMessage('UI loaded!')
+    })
 
     // @ts-ignore
     webContents.on(SKETCH_EVENT.CLIENT_SEND_IMAGE, this.pushImageToPage)
 
     // @ts-ignore
-    webContents.on(SKETCH_EVENT.CLIENT_LOG, this.pushMessage)
+    webContents.on(SKETCH_EVENT.CLIENT_LOG, (...arg) => {
+      console.log(arg.join(','))
+      // this.pushMessage
+    })
 
     this.browserWindow.loadURL(getWebviewUrl())
   }

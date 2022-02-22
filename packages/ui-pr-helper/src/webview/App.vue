@@ -67,6 +67,7 @@
 
 <script setup lang="ts">
 import './assets/css/tailwindcss.css'
+import { ref, computed } from 'vue'
 import useSocket from './compositions/socket';
 import RegisterTips from './components/register-tips.vue';
 
