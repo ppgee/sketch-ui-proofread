@@ -1,7 +1,7 @@
 {
   "name": "ui-pr-helper",
   "version": "1.0.0",
-  "description": "the extension for sketch",
+  "description": "移动端对稿工具，减少对稿链路，快速匹配对稿，早点下班☕️ ",
   "private": false,
   "keywords": [
     "sketch",
