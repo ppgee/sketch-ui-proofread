@@ -158,6 +158,10 @@ class SocketServer {
       const [room,] = socket.rooms[0]
       this.broadcastTransferImage(room, filepath)
     })
+
+    socket.on(CLIENT_EMIT_EVENTS.PULL_ROOMS, () => {
+      socket.emit(SERVER_EMIT_EVENTS.LIST_ROOMS, this.formatRooms())
+    })
   }
 
   // 初始化插件端socket

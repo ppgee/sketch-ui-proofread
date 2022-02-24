@@ -51,6 +51,7 @@ export interface ClientEmitEvents {
   [CLIENT_EMIT_EVENTS.JOIN_ROOM]: BaseIdRoomFunction
   [CLIENT_EMIT_EVENTS.SEND_IMAGE]: FileFunction
   [CLIENT_EMIT_EVENTS.OUT_ROOM]: BaseIdRoomFunction
+  [CLIENT_EMIT_EVENTS.PULL_ROOMS]: EmptyFunction
 }
 
 export interface SocketData {}

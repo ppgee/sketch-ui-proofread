@@ -22,5 +22,6 @@ export enum CLIENT_EMIT_EVENTS {
   CREATE_ROOM = 'create-room',
   JOIN_ROOM = 'join-room',
   SEND_IMAGE = 'client-send-image',
-  OUT_ROOM = 'client-out-room'
+  OUT_ROOM = 'client-out-room',
+  PULL_ROOMS = 'pull-rooms'
 }

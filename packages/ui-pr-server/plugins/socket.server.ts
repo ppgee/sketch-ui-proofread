@@ -31,17 +31,17 @@ async function saveToImage(params: any) {
   return filepath
 }
 
-async function updateRoomsToDB(params: { action: 'add' | 'remove' | 'update', key: keyof RoomList, value: RoomList[keyof RoomList] }): Promise<RoomList> {
+async function updateRoomsToDB(params: { action: 'add' | 'remove' | 'update', key: keyof RoomList, value?: RoomList[keyof RoomList] }): Promise<RoomList> {
   try {
     await db.read()
     db.data ||= { rooms: {} }
 
     const { action, key, value } = params
-    if (action === 'add') {
+    if (action === 'add' && value) {
       db.data.rooms[key] = value
     } else if (action === 'remove') {
       delete db.data.rooms[key]
-    } else if (action === 'update') {
+    } else if (action === 'update' && value) {
       db.data.rooms[key] = value
     }
 

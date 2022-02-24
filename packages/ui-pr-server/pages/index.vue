@@ -20,77 +20,59 @@
           >{{ tab.name }}</button>
         </Tab>
       </TabList>
-      <TabPanels class="mt-2" v-slot="{ selectedIndex }">
+      <TabPanels as="template">
         <TabPanel
-          v-for="(tab, idx) in tabList"
-          :key="idx"
           :class="[
-            'bg-white rounded-xl p-3',
+            'mt-2 bg-white rounded-xl p-3',
             'focus:outline-none focus:ring-2 ring-offset-2 ring-offset-blue-400 ring-white ring-opacity-60',
           ]"
         >
-          <section v-show="selectedIndex === 0">{{ tab.name }}</section>
-          <section v-show="selectedIndex === 1" class="w-full px-2 py-4">
-            <div class="w-full max-w-md mx-auto">
-              <RadioGroup v-model="selected">
-                <!-- <RadioGroupLabel class="sr-only">Server size</RadioGroupLabel> -->
-                <div class="space-y-2">
-                  <RadioGroupOption
-                    as="template"
-                    v-for="room in rooms"
-                    :key="room.room"
-                    :value="room.room"
-                    v-slot="{ active, checked }"
-                  >
-                    <div
-                      :class="[
-                        active
-                          ? 'ring-2 ring-offset-2 ring-offset-sky-300 ring-white ring-opacity-60'
-                          : '',
-                        checked ? 'bg-sky-900 bg-opacity-75 text-white ' : 'bg-white ',
-                      ]"
-                      class="relative flex px-5 py-4 rounded-lg shadow-md cursor-pointer focus:outline-none"
-                    >
-                      <div class="flex items-center justify-between w-full">
-                        <div class="flex items-center">
-                          <div class="text-sm">
-                            <RadioGroupLabel
-                              as="p"
-                              :class="checked ? 'text-white' : 'text-gray-900'"
-                              class="font-medium"
-                            >{{ room.room }}</RadioGroupLabel>
-                            <!-- <RadioGroupDescription
-                              as="span"
-                              :class="checked ? 'text-sky-100' : 'text-gray-500'"
-                              class="inline"
-                            >
-                              <span>{{ plan.ram }}/{{ plan.cpus }}</span>
-                              <span aria-hidden="true">&middot;</span>
-                              <span>{{ plan.disk }}</span>
-                            </RadioGroupDescription>-->
-                          </div>
-                        </div>
-                        <div class="flex flex-shrink-0">
-                          <div class="mr-4 text-black">当前{{room.online ? '在线' : '离线'}}</div>
-                          <div v-show="checked" class="text-white">
-                            <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none">
-                              <circle cx="12" cy="12" r="12" fill="#fff" fill-opacity="0.2" />
-                              <path
-                                d="M7 13l3 3 7-7"
-                                stroke="#fff"
-                                stroke-width="1.5"
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                              />
-                            </svg>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </RadioGroupOption>
-                </div>
-              </RadioGroup>
+          <section class="w-full px-2 py-4">
+            <div class="relative">
+              <input ref="inputElem" type="file" accept="image/*" @change="uploadFile" class="absolute z-0 h-full w-full opacity-0" />
+              <button
+                type="button"
+                :class="[
+                  'inline-block w-full py-4 text-sm leading-5 font-medium text-white rounded-lg',
+                  'focus:outline-none focus:ring-2 ring-offset-2 ring-offset-blue-400 ring-white ring-opacity-60',
+                  'bg-blue-600'
+                  // selected
+                  //   ? 'bg-white shadow'
+                  //   : 'text-blue-100 hover:bg-white/[0.12] hover:text-white',
+                ]"
+              >立即传图</button>
             </div>
+            <div v-show="fileList.length" class="relative grid gap-8 bg-white px-1.5 py-7 lg:grid-cols-2">
+              <div
+                v-for="file in fileList"
+                :key="file.file.name"
+                class="flex items-center p-2 -m-3 transition duration-150 ease-in-out rounded-lg hover:bg-gray-50 focus:outline-none focus-visible:ring focus-visible:ring-orange-500 focus-visible:ring-opacity-50"
+              >
+                <div
+                  class="flex items-center justify-center flex-shrink-0 w-16 h-16 text-white sm:h-12 sm:w-12"
+                >
+                  <img class="inline-block w-full h-full object-contain" :src="file.img" />
+                </div>
+                <div class="ml-4">
+                  <p class="text-sm font-medium text-gray-900">
+                    {{ file.file.name }}
+                  </p>
+                  <p class="text-sm text-gray-500">
+                    截图时间：{{ file.time }}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </section>
+        </TabPanel>
+        <TabPanel
+          :class="[
+            'mt-2 bg-white rounded-xl p-3',
+            'focus:outline-none focus:ring-2 ring-offset-2 ring-offset-blue-400 ring-white ring-opacity-60',
+          ]"
+        >
+          <section class="w-full px-2 py-4">
+            <PluginList :rooms="rooms" :store-socket-info="storeSocketInfo" @change="changePlugin"></PluginList>
           </section>
         </TabPanel>
       </TabPanels>
@@ -99,15 +81,10 @@
 </template>
 
 <script setup lang="ts">
-import { TabGroup, TabList, Tab, TabPanel, TabPanels, RadioGroup, RadioGroupLabel, RadioGroupOption } from '@headlessui/vue'
-import { SocketClient, getUuid } from 'ui-pr-socket/client'
+import { TabGroup, TabList, Tab, TabPanel, TabPanels } from '@headlessui/vue'
+import useSocket from '~~/composables/socket';
+import dayjs from 'dayjs'
 
-type roomFormatter = {
-  room: string,
-  online: boolean
-}
-
-let socketClient: SocketClient
 
 let tabList = ref([
   {
@@ -117,27 +94,42 @@ let tabList = ref([
     name: '插件列表'
   }
 ])
-let selected = ref<number>(-1)
-let rooms = ref<Array<roomFormatter>>([])
+let inputElem = ref<HTMLInputElement>()
+let fileList = ref<Array<{
+  file: File,
+  img: string,
+  time: string
+}>>([])
+let { rooms, socketLoading, storeSocketInfo, updateSocketInfo } = useSocket()
 
-const getRooms = (roomList: Array<roomFormatter>) => {
-  console.log(roomList)
-  rooms.value = roomList
+onUpdated(() => {
+  console.log(storeSocketInfo)
+})
+
+function changePlugin(room: string) {
+  updateSocketInfo('room', room)
 }
 
-onMounted(() => {
-  socketClient = new SocketClient({
-    id: getUuid(),
-    url: window.location.origin,
-    socketFrom: 'device',
-    getRoomsFn: getRooms
-  })
-})
+function uploadFile(event: Event) {
+  const files = (<HTMLInputElement>event.target).files
+  if (!files) {
+    return
+  }
 
-onBeforeUnmount(() => {
-  console.log('客户端主动下线')
-  socketClient.io.disconnect()
-})
+  const file = files[0]
+  const reader = new FileReader()
+  reader.onload = function(event) {
+    fileList.value.unshift({
+      file,
+      img: <string>event.target?.result,
+      time: dayjs(file.lastModified).format('HH:mm:ss')
+    })
+  }
+  reader.readAsDataURL(file)
+
+  // 清空值
+  inputElem.value && (inputElem.value.value = '')
+}
 </script>
 
 <style lang="scss">

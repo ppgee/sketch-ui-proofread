@@ -16,15 +16,21 @@
       </TabList>
       <TabPanels class="mt-2" v-slot="{ selectedIndex }">
         <TabPanel
-          v-for="(tab, idx) in tabList"
-          :key="idx"
           :class="[
             'bg-white rounded-xl p-3',
             'focus:outline-none focus:ring-2 ring-offset-2 ring-offset-blue-400 ring-white ring-opacity-60',
           ]"
         >
-          <section v-show="selectedIndex === 0">{{ tab.name }}</section>
-          <section v-show="selectedIndex === 1" class="py-12 text-left">
+          <section>{{ tabList[0].name }}</section>
+        </TabPanel>
+        <TabPanel
+          :key="tabList[1].name"
+          :class="[
+            'bg-white rounded-xl p-3',
+            'focus:outline-none focus:ring-2 ring-offset-2 ring-offset-blue-400 ring-white ring-opacity-60',
+          ]"
+        >
+          <section class="py-12 text-left">
             <div class="grid grid-cols-1 gap-6">
               <label class="block mb-4">
                 <span class="text-2xl text-gray-700">🌐 服务器地址：</span>

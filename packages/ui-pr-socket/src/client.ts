@@ -1,7 +1,7 @@
 import { io, Socket } from 'socket.io-client'
 import getUuid from './shared/uuid'
 import { SOCKET_EVENTS, SERVER_EMIT_EVENTS, CLIENT_EMIT_EVENTS } from './shared/events'
-import { ClientOnEvents, ClientEmitEvents, SocketClientOptions, SocketFileOptions } from './types/socket'
+import { ClientOnEvents, ClientEmitEvents, SocketClientOptions, SocketFileOptions, roomFormatter } from './types/socket'
 import { printLog } from './shared/utils'
 
 class SocketClient {
@@ -109,6 +109,11 @@ class SocketClient {
   joinRoom(option: { id: string, room: string }) {
     printLog('客户端提交加入房间')
     this.io.emit(CLIENT_EMIT_EVENTS.JOIN_ROOM, option)
+  }
+
+  pullRooms() {
+    printLog('客户端提交拉取房间')
+    this.io.emit(CLIENT_EMIT_EVENTS.PULL_ROOMS)
   }
 
   outRoom(option: { id: string, room: string }) {
