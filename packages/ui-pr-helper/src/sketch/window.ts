@@ -67,7 +67,6 @@ export class HelpWindow {
   }
 
   private init() {
-    // this.browserWindow.
     const webContents = this.browserWindow.webContents
 
     // print a message web the page loads

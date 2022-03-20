@@ -4,7 +4,7 @@ function onRun(key: any, context: any) {
   // @ts-ignore
   globalThis.context = context
   const sketchWebview = new HelpWindow()
-  // sketchWebview.pushMessage('Sketch Webview is starting')
+  sketchWebview.pushMessage('Sketch Webview is starting')
 }
 
 // When the plugin is shutdown by Sketch (for example when the user disable the plugin)
