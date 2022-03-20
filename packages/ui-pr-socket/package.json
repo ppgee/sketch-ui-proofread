@@ -8,12 +8,18 @@
   "author": "PGee <283959070@qq.com>",
   "homepage": "https://github.com/ppgee/sketch-ui-helper#readme",
   "license": "ISC",
-  "main": "server/ur-pr-socket.js",
-  "module": "server/ur-pr-socket.mjs",
-  "typings": "server/ur-pr-socket.d.ts",
-  "browser": {
-    "server/ur-pr-socket.js": "client/ur-pr-socket.js",
-    "server/ur-pr-socket.mjs": "client/ur-pr-socket.mjs"
+  "type": "module",
+  "types": "lib",
+  "typings": "server/index.d.ts",
+  "exports": {
+    "./client": {
+       "require": "./client/index.cjs",
+       "import": "./client/index.mjs"
+    },
+    "./server": {
+       "require": "./server/index.cjs",
+       "import": "./server/index.mjs"
+    }
   },
   "directories": {
     "lib": "src",
@@ -28,7 +34,8 @@
   },
   "scripts": {
     "dev": "rollup -c -w",
-    "build": "rm -rf dist && rollup -c",
+    "prebuild": "rm -rf server client",
+    "build": "rollup -c",
     "test": "echo \"Error: run tests from root\" && exit 1"
   },
   "bugs": {

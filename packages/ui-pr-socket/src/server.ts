@@ -1,27 +1,25 @@
 import { Server, Socket } from 'socket.io'
 import { Server as HttpServer } from 'http'
-import { readFileSync } from 'fs'
 
 import getUuid from './shared/uuid'
 import { SOCKET_EVENTS, SERVER_EMIT_EVENTS, CLIENT_EMIT_EVENTS } from './shared/events'
-import { ServerSocket, SocketFirstReqQuery, SocketFrom, SocketData, SocketFileOptions, RoomList, DBActionRoomFunction, roomFormatter } from './types/socket'
+import { ServerSocket, SocketFirstReqQuery, SocketFrom, RoomList, DBActionRoomFunction, roomFormatter } from './types/socket'
+
 
 class SocketServer {
   io: Server
   rooms: RoomList
-  saveToImageFn: (params: SocketFileOptions) => Promise<string>
   updateRoomsToDB: DBActionRoomFunction
 
-  constructor(server: HttpServer, options: { rooms: RoomList, saveToImageFn: (params: SocketFileOptions) => Promise<string>, updateRoomsToDB: DBActionRoomFunction }) {
+  constructor(server: HttpServer, options: { rooms: RoomList, updateRoomsToDB: DBActionRoomFunction }) {
     // 生成 io 实例
     this.io = new Server<ServerSocket>(server, {
       cors: {
         origin: '*'
-      }
+      },
+      maxHttpBufferSize: 1e8
     })
     this.rooms = options.rooms || {}
-    // 服务器保存图片函数
-    this.saveToImageFn = options.saveToImageFn
     // 更新db
     this.updateRoomsToDB = options.updateRoomsToDB
 
@@ -37,6 +35,7 @@ class SocketServer {
 
       // 如果不存在直接退出
       if (!socketFrom) {
+        socket.disconnect()
         return
       }
 
@@ -65,6 +64,7 @@ class SocketServer {
               key: room,
               value: {
                 id,
+                socketId: socket.id,
                 online: false
               }
             })
@@ -74,7 +74,7 @@ class SocketServer {
 
           socket.emit(SERVER_EMIT_EVENTS.OUTED_ROOM, { id, room })
         } catch (error) {
-          socket.emit(SERVER_EMIT_EVENTS.OUT_ROOM_FAIL, { msg: error })
+          socket.emit(SERVER_EMIT_EVENTS.OUT_ROOM_FAIL, { msg: `${error}` })
         }
       })
 
@@ -82,46 +82,26 @@ class SocketServer {
       socket.on(SOCKET_EVENTS.DISCONNECTING, (reason) => {
         console.log(`${socketFrom}: ${id} 下线了`)
         console.log(`下线原因：${reason}`)
+
         this.logoutSocket({
           id,
           socketFrom,
-          roomName: socket.rooms[0],
+          roomName: this.getRoomName(socket),
           socketId: socket.id
         })
-      })
-
-      // 失去连接
-      socket.on(SOCKET_EVENTS.DISCONNECTION, () => {
-        console.log(`${socketFrom}: ${id} 失去连接`)
-        // socket.emit(SERVER_EMIT_EVENTS.OUT_ROOM, {
-        //   msg: '失去连接下线'
-        // })
       })
 
       console.log(`${socketFrom}: ${id} 加入 server 成功`)
     })
   }
 
-  async logoutSocket(options: { roomName: string; socketId: string, id: string, socketFrom: SocketFrom }) {
-    const { roomName, socketId, socketFrom, id } = options
-    this.io.in(socketId).socketsLeave(roomName)
-
-    // 如果是插件端，需要更新房间状态
-    if (socketFrom === 'plugin') {
-      this.rooms = await this.updateRoomsToDB({
-        action: 'update',
-        key: roomName,
-        value: {
-          id,
-          online: false
-        }
-      })
-      this.broadcastRoomsToClient()
-    }
-  }
+  ///
+  /// start
+  /// 设备端socket方法
+  ///
 
   // 初始化设备端socket
-  initDeviceSocket(socket: ServerSocket) {
+  initDeviceSocket(socket: ServerSocket): void {
     // 发送当前的插件列表
     socket.emit(SERVER_EMIT_EVENTS.LIST_ROOMS, this.formatRooms())
 
@@ -136,7 +116,7 @@ class SocketServer {
         return
       }
 
-      this.joinRoom(socket, room)
+      this.deviceJoinRoom(socket, room)
     })
 
     socket.on(CLIENT_EMIT_EVENTS.SEND_IMAGE, async (options) => {
@@ -147,16 +127,8 @@ class SocketServer {
         return
       }
 
-      if (!this.saveToImageFn) {
-        return
-      }
-
-      const filepath = await this.saveToImageFn(options)
-      if (!filepath) {
-        socket.emit(SERVER_EMIT_EVENTS.GET_IMAGE_FAIL, { msg: '服务器出错了！' })
-      }
-      const [room,] = socket.rooms[0]
-      this.broadcastTransferImage(room, filepath)
+      // console.log(this.getRoomName(socket))
+      this.broadcastTransferImage(this.getRoomName(socket), options.buffer)
     })
 
     socket.on(CLIENT_EMIT_EVENTS.PULL_ROOMS, () => {
@@ -164,21 +136,40 @@ class SocketServer {
     })
   }
 
-  // 初始化插件端socket
-  async initPluginSocket(socket: ServerSocket) {
-    const { id } = socket.handshake.query as SocketFirstReqQuery
+  deviceJoinRoom(socket: ServerSocket, room: string): void {
+    if (this.hasMoreRoom(socket)) {
+      socket.emit(SERVER_EMIT_EVENTS.JOIN_ROOM_FAIL, { msg: '已选定插件，暂不支持多插件！' })
+      return
+    }
+    socket.join(room)
+    socket.emit(SERVER_EMIT_EVENTS.JOINED_ROOM, room)
+  }
 
+  ///
+  /// end
+  /// 设备端socket方法
+  ///
+
+  ///
+  /// start
+  /// 插件端socket方法
+  ///
+
+  // 初始化插件端socket
+  async initPluginSocket(socket: ServerSocket): Promise<void> {
     // 查看是否已经建立房间，如果是，直接加入房间即可
     try {
+      const { id } = socket.handshake.query as SocketFirstReqQuery
       const room = this.checkRoomOwner(id)
       if (room.length !== 0 && !this.checkJoinedRoom(socket, room)) {
-        this.joinRoom(socket, room)
+        this.pluginJoinRoom(socket, room)
         // 如果是插件端，需要更新房间状态
         this.rooms = await this.updateRoomsToDB({
           action: 'update',
           key: room,
           value: {
             id,
+            socketId: socket.id,
             online: true
           }
         })
@@ -200,22 +191,30 @@ class SocketServer {
         }
 
         if (this.checkExistRoom(room)) {
-          socket.emit(SERVER_EMIT_EVENTS.CREATED_ROOM_FAIL, {
-            msg: '名字已存在'
+          this.pluginJoinRoom(socket, room)
+          this.rooms = await this.updateRoomsToDB({
+            action: 'update',
+            key: room,
+            value: {
+              id,
+              socketId: socket.id,
+              online: true
+            }
           })
+          this.broadcastRoomsToClient()
           return
         }
 
-        this.rooms[room] = {
-          id,
-          online: true
-        }
-        socket.join(room)
+        this.pluginJoinRoom(socket, room)
         socket.emit(SERVER_EMIT_EVENTS.CREATED_ROOM, room)
-        await this.updateRoomsToDB({
+        this.rooms = await this.updateRoomsToDB({
           action: 'add',
           key: room,
-          value: this.rooms[room]
+          value: {
+            id,
+            socketId: socket.id,
+            online: true
+          }
         })
         this.broadcastRoomsToClient()
       } catch (error) {
@@ -226,17 +225,57 @@ class SocketServer {
     })
   }
 
-  joinRoom(socket: ServerSocket, room: string) {
-    if (this.hasMoreRoom(socket)) {
-      socket.emit(SERVER_EMIT_EVENTS.JOIN_ROOM_FAIL, { msg: '已选定插件，暂不支持多插件！' })
+  pluginJoinRoom(socket: ServerSocket, room: string): void {
+    if (this.checkJoinedRoom(socket, room)) {
+      socket.emit(SERVER_EMIT_EVENTS.JOIN_ROOM_FAIL, { msg: '【插件端】已加入房间' })
       return
     }
     socket.join(room)
     socket.emit(SERVER_EMIT_EVENTS.JOINED_ROOM, room)
   }
 
+  ///
+  /// end
+  /// 插件端socket方法
+  ///
+
+  ///
+  /// start
+  /// 公共方法
+  ///
+  async logoutSocket(options: { roomName: string; socketId: string, id: string, socketFrom: SocketFrom }) {
+    const { roomName, socketId, socketFrom, id } = options
+    this.io.in(socketId).socketsLeave(roomName)
+
+    // 如果是插件端，需要更新房间状态
+    if (socketFrom === 'plugin') {
+      this.rooms = await this.updateRoomsToDB({
+        action: 'update',
+        key: roomName,
+        value: {
+          id,
+          socketId: '',
+          online: false
+        }
+      })
+      this.broadcastRoomsToClient()
+    }
+  }
+
+  // 获取房间名
+  getRoomName(socket: ServerSocket): string {
+    const roomSet = socket.rooms.keys()
+
+    let roomName = ''
+    for (let value of roomSet) {
+      roomName = value
+    }
+    console.log('找到房间名：', roomName)
+    return roomName
+  }
+
   hasMoreRoom(socket: ServerSocket): boolean {
-    return socket.rooms.size >= 1
+    return socket.rooms.size >= 2
   }
 
   checkExistRoom(room: string): boolean {
@@ -286,11 +325,18 @@ class SocketServer {
   }
 
   // 广播传输图片
-  broadcastTransferImage(room: string, filepath: string) {
-    // 读取文件
-    const fileBuffer = readFileSync(filepath)
-    this.io.to(room).emit(SERVER_EMIT_EVENTS.SEND_IMAGE, fileBuffer)
+  async broadcastTransferImage(room: string, buffer: ArrayBuffer) {
+    const socketId = this.rooms[room].socketId
+    if (!socketId) {
+      return
+    }
+    const socket = this.io.in(socketId)
+    socket.emit(SERVER_EMIT_EVENTS.SEND_IMAGE, buffer)
   }
+  ///
+  /// end
+  /// 公共方法
+  ///
 }
 
 export {

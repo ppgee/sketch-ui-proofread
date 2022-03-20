@@ -14,16 +14,20 @@ export default ['server', 'client'].reduce((bundles, envType) => {
       plugins: [esbuild(), terser()],
       output: [
         {
-          file: `${envType}/index.js`,
+          file: `${envType}/index.mjs`,
           format: 'es'
-        }
+        },
+        {
+          file: `${envType}/index.cjs`,
+          format: 'cjs'
+        },
       ],
     }),
     bundle(envType, {
       plugins: [dts()],
       output: {
         file: `${envType}/index.d.ts`,
-        format: 'es',
+        format: 'cjs',
       },
     }),
   ])

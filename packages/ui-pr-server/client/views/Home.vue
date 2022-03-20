@@ -1,12 +1,6 @@
 <template>
   <main class="p-12">
-    <Html>
-      <Head>
-        <Title>sketch对稿助手传图端</Title>
-      </Head>
-    </Html>
-
-    <TabGroup>
+    <TabGroup :selected-index="selectedTab">
       <TabList class="flex p-1 space-x-1 bg-blue-900/20 rounded-xl">
         <Tab v-for="tab in tabList" as="template" :key="tab.name" v-slot="{ selected }">
           <button
@@ -29,7 +23,13 @@
         >
           <section class="w-full px-2 py-4">
             <div class="relative">
-              <input ref="inputElem" type="file" accept="image/*" @change="uploadFile" class="absolute z-0 h-full w-full opacity-0" />
+              <input
+                ref="inputElem"
+                type="file"
+                accept="image/*"
+                @change="uploadFile"
+                class="absolute z-0 h-full w-full opacity-0"
+              />
               <button
                 type="button"
                 :class="[
@@ -42,7 +42,10 @@
                 ]"
               >立即传图</button>
             </div>
-            <div v-show="fileList.length" class="relative grid gap-8 bg-white px-1.5 py-7 lg:grid-cols-2">
+            <div
+              v-show="fileList.length"
+              class="relative grid gap-8 bg-white px-1.5 py-7 lg:grid-cols-2"
+            >
               <div
                 v-for="file in fileList"
                 :key="file.file.name"
@@ -54,12 +57,8 @@
                   <img class="inline-block w-full h-full object-contain" :src="file.img" />
                 </div>
                 <div class="ml-4">
-                  <p class="text-sm font-medium text-gray-900">
-                    {{ file.file.name }}
-                  </p>
-                  <p class="text-sm text-gray-500">
-                    截图时间：{{ file.time }}
-                  </p>
+                  <p class="text-sm font-medium text-gray-900">{{ file.file.name }}</p>
+                  <p class="text-sm text-gray-500">截图时间：{{ file.time }}</p>
                 </div>
               </div>
             </div>
@@ -77,14 +76,22 @@
         </TabPanel>
       </TabPanels>
     </TabGroup>
+    <RegisterTips :is-dialog-open="isDialogOpen" @close-dialog="closeDialog"></RegisterTips>
   </main>
 </template>
 
 <script setup lang="ts">
 import { TabGroup, TabList, Tab, TabPanel, TabPanels } from '@headlessui/vue'
-import useSocket from '~~/composables/socket';
+import RegisterTips from '../components/register-tips.vue'
+import PluginList from '../components/plugin-list.vue'
+import useSocket from '../composables/socket';
 import dayjs from 'dayjs'
+import { onMounted, ref } from 'vue';
 
+const enum TAB_MAP {
+  FUNC = 0,
+  INFO = 1
+}
 
 let tabList = ref([
   {
@@ -94,16 +101,26 @@ let tabList = ref([
     name: '插件列表'
   }
 ])
+let selectedTab = ref(TAB_MAP.FUNC)
+let isDialogOpen = ref(false)
 let inputElem = ref<HTMLInputElement>()
 let fileList = ref<Array<{
   file: File,
   img: string,
   time: string
 }>>([])
-let { rooms, socketLoading, storeSocketInfo, updateSocketInfo } = useSocket()
+let { rooms, socketLoading, storeSocketInfo, updateSocketInfo, sendFileToPlugin } = useSocket()
 
-onUpdated(() => {
-  console.log(storeSocketInfo)
+console.log('rooms', rooms.value)
+
+const closeDialog = () => {
+  isDialogOpen.value = false
+  selectedTab.value = TAB_MAP.INFO
+}
+
+onMounted(() => {
+  selectedTab.value = storeSocketInfo.value.room ? TAB_MAP.FUNC : TAB_MAP.INFO
+  isDialogOpen.value = !storeSocketInfo.value.room
 })
 
 function changePlugin(room: string) {
@@ -118,12 +135,13 @@ function uploadFile(event: Event) {
 
   const file = files[0]
   const reader = new FileReader()
-  reader.onload = function(event) {
+  reader.onload = function (event) {
     fileList.value.unshift({
       file,
       img: <string>event.target?.result,
       time: dayjs(file.lastModified).format('HH:mm:ss')
     })
+    file.arrayBuffer().then((result) => sendFileToPlugin(result, file.type.replace('image/', '')))
   }
   reader.readAsDataURL(file)
 

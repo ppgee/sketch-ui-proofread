@@ -1,5 +1,6 @@
 // import {} from 'vue'
 import { SocketClient } from 'ui-pr-socket/client'
+import { onBeforeUnmount, onMounted, ref } from 'vue';
 
 type roomFormatter = {
   room: string,
@@ -10,6 +11,10 @@ const getUuid = (a: string = ''): string => (
   a ? ((Number(a) ^ Math.random() * 16) >> Number(a) / 4).toString(16)
     : (`${1e7}-${1e3}-${4e3}-${8e3}-${1e11}`).replace(/[018]/g, getUuid)
 );
+
+function printError(params: { msg: string; }) {
+  console.log(params.msg)
+}
 
 const SOCKET_INFO_KEY = 'socket-info'
 
@@ -22,7 +27,7 @@ export type SocketInfo = {
 
 export default function useSocket() {
   // 本地存储的socket信息
-  let storeSocketInfo = reactive(createSocketInfo())
+  let storeSocketInfo = ref(createSocketInfo())
   let socketLoading = ref<'pending' | 'resolved'>('resolved')
   let rooms = ref<Array<roomFormatter>>([])
 
@@ -35,7 +40,19 @@ export default function useSocket() {
 
   function getInfoFromStore(): SocketInfo {
     let socketInfoStr = window.localStorage.getItem(SOCKET_INFO_KEY)
-    return socketInfoStr ? JSON.parse(socketInfoStr) : storeSocketInfo
+    return socketInfoStr ? JSON.parse(socketInfoStr) : storeSocketInfo.value
+  }
+
+  function updateInfoToStore(): void {
+    window.localStorage.setItem(SOCKET_INFO_KEY, JSON.stringify(storeSocketInfo.value))
+    joinRoom()
+  }
+
+  function joinRoom() {
+    socketClient.joinRoom({
+      id: storeSocketInfo.value.id,
+      room: storeSocketInfo.value.room
+    })
   }
 
   function getRooms(roomList: Array<roomFormatter>) {
@@ -44,25 +61,38 @@ export default function useSocket() {
   }
 
   function updateSocketInfo<K extends keyof SocketInfo, T extends SocketInfo[K]>(infoKey: K, value: T) {
-    storeSocketInfo[infoKey] = value
+    if (!infoKey || !value) return
+    storeSocketInfo.value[infoKey] = value
+    updateInfoToStore()
+  }
+
+  async function sendFileToPlugin(buffer: ArrayBuffer, fileFormat: string) {
+    if (!socketClient) return
+    socketClient.uploadImage({
+      buffer,
+      fileFormat
+    })
   }
 
   onMounted(() => {
+    console.log('use mounted')
     // 挂载时加载
-    storeSocketInfo = getInfoFromStore()
+    storeSocketInfo.value = getInfoFromStore()
     if (socketClient) {
+      joinRoom()
       socketClient.pullRooms()
       return
     }
 
-    const { id } = toRaw(storeSocketInfo)
     socketLoading.value = 'pending'
-    console.log(`id: ${id} 准备连接 socket`)
+    console.log(`id: ${storeSocketInfo.value.id} 准备连接 socket`)
     socketClient = new SocketClient({
-      id,
+      id: storeSocketInfo.value.id,
       url: window.location.origin,
       socketFrom: 'device',
-      getRoomsFn: getRooms
+      getRoomsFn: getRooms,
+      joinedRoomFailure: printError,
+      clientConnectedFn: joinRoom
     })
   })
   
@@ -77,5 +107,6 @@ export default function useSocket() {
     socketLoading,
     rooms,
     updateSocketInfo,
+    sendFileToPlugin
   }
 }

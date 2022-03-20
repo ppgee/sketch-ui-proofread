@@ -1,6 +1,6 @@
 <template>
   <div class="w-full max-w-md mx-auto">
-    <RadioGroup v-model="room">
+    <RadioGroup v-show="rooms.length" v-model="room">
       <!-- <RadioGroupLabel class="sr-only">Server size</RadioGroupLabel> -->
       <div class="space-y-2">
         <RadioGroupOption
@@ -63,10 +63,12 @@
         </RadioGroupOption>
       </div>
     </RadioGroup>
+    <div v-show="rooms.length === 0" class="text-center text-gray-400">暂无插件</div>
   </div>
 </template>
 
 <script setup lang="ts">
+import { ref, onUpdated } from 'vue'
 import { RadioGroup, RadioGroupLabel, RadioGroupOption } from '@headlessui/vue'
 const props = defineProps<{
   rooms: {

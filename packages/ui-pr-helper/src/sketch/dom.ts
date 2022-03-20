@@ -1,4 +1,4 @@
-import { getDocuments, getSelectedDocument, Page, Types, Image, Rectangle } from 'sketch/dom';
+import { getDocuments, getSelectedDocument, Page, Types, Image, Rectangle, Style, IStyle } from 'sketch/dom';
 import { ImageLayerFrame } from '../types/dom';
 
 export function getArtBoardFrame(selectedPage: Page | undefined, imgScale: number): ImageLayerFrame {
@@ -65,8 +65,8 @@ export function getSelectedPage(): Page {
   return selectedDoc.selectedPage
 }
 
-export function initImageLayer(option: { imageUrl: string, imgScale: number, selectedPage: Page | undefined }): Image {
-  const { imageUrl, selectedPage, imgScale } = option
+export function initImageLayer(option: { imageUrl: string, imgScale: number, selectedPage: Page | undefined, style?: Style | IStyle }): Image {
+  const { imageUrl, selectedPage, imgScale, style } = option
   // 创建图片base64
   let imageData = NSData.alloc().initWithBase64Encoding(imageUrl)
   let image = NSImage.alloc().initWithData(imageData)
@@ -76,6 +76,7 @@ export function initImageLayer(option: { imageUrl: string, imgScale: number, sel
   const imageLayer = new Image({
     image,
     frame: new Rectangle(layerFrame.x, layerFrame.y, layerFrame.width, layerFrame.height),
+    style
   })
 
   return imageLayer

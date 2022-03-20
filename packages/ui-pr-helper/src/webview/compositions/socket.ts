@@ -1,14 +1,7 @@
 import { ref, reactive, toRaw } from 'vue'
-import { SocketClient } from 'ui-pr-socket/client'
-
-const getUuid = (a: string = ''): string => (
-  a ? ((Number(a) ^ Math.random() * 16) >> Number(a) / 4).toString(16)
-    : (`${1e7}-${1e3}-${4e3}-${8e3}-${1e11}`).replace(/[018]/g, getUuid)
-);
-
-function validateHTTP(str: string) {
-  return str.indexOf("http://") == 0 || str.indexOf("https://") == 0
-}
+import { getUuid, SocketClient } from 'ui-pr-socket/client'
+import { SKETCH_EVENT } from '../bridge/event';
+import { arrayBufferToBase64, arrayBufferToImgUrl, dateFormatter, getImgScale, validateHTTP } from '../utils';
 
 const SOCKET_INFO_KEY = 'socket-info'
 
@@ -25,6 +18,9 @@ export default function useSocket() {
   let storeSocketInfo = reactive(getInfoFromStore())
   let socketLoading = ref<'pending' | 'resolved'>('resolved')
   let isJoined = ref<boolean>(false)
+
+  // 已收到的图片列表
+  let imgList = ref<{ url: string, time: string }[]>([])
 
   function getInfoFromStore(): SocketInfo {
     let socketInfoStr = window.localStorage.getItem(SOCKET_INFO_KEY)
@@ -50,6 +46,36 @@ export default function useSocket() {
     storeSocketInfo[infoKey] = value
   }
 
+  function printMsg(params: { msg: string; }) {
+    console.log(params.msg)
+  }
+
+  async function getServerImg(buffer: ArrayBuffer) {
+    try {
+      updateImgList(buffer)
+      // 结束时将字节数组转化成图片
+      const imageBase64 = arrayBufferToBase64(buffer)
+      const imgScale = await getImgScale(`data:;base64,${imageBase64}`)
+      console.log('【准备发送图片到插件】', imgScale)
+      // @ts-ignore
+      window.postMessage(SKETCH_EVENT.CLIENT_SEND_IMAGE, imageBase64, imgScale)
+    } catch (error) {
+      console.error(error)
+    }
+  }
+
+  function updateImgList(buffer: ArrayBuffer) {
+    const imgUrl = arrayBufferToImgUrl(buffer)
+    imgList.value.unshift({
+      url: imgUrl,
+      time: dateFormatter(new Date())
+    })
+  }
+
+  function clearImgList() {
+    imgList.value = []
+  }
+
   function createSocketConnection() {
     if (socketClient) return
 
@@ -68,6 +94,9 @@ export default function useSocket() {
       clientConnectedFn: () => socketClient.createRoom({ id: storeSocketInfo.id, room }),
       createRoomSuccess: updateInfoFromStore,
       joinRoomSuccess: updateInfoFromStore,
+      joinedRoomFailure: printMsg,
+      sendImageFail: printMsg,
+      getServerImgFn: getServerImg
       // joinedRoomFn
     })
   }
@@ -81,6 +110,8 @@ export default function useSocket() {
     isJoined,
     socketLoading,
     storeSocketInfo,
+    imgList,
+    clearImgList,
     updateSocketInfo,
     createSocketConnection
   }

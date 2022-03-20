@@ -1,29 +1,52 @@
 {
   "name": "ui-pr-server",
-  "version": "0.1.0",
+  "private": false,
+  "version": "0.0.1",
   "scripts": {
-    "dev": "nuxi dev",
-    "build": "nuxi build",
-    "start": "node .output/server/index.mjs",
-    "generate": "export NITRO_PRESET=browser && npm run build"
-  },
-  "devDependencies": {
-    "@nuxtjs/tailwindcss": "^5.0.0-4",
-    "autoprefixer": "^10.4.2",
-    "nuxt3": "latest",
-    "postcss": "^8.4.6",
-    "sass": "^1.49.7",
-    "sass-loader": "^12.6.0"
+    "dev:client": "vite",
+    "dev:server": "ts-node server/server.ts",
+    "dev": "concurrently -n vue,server npm:dev:client npm:dev:server",
+    "build:client": "vue-tsc --noEmit -p client && vite build",
+    "build:server": "rimraf build && tsc",
+    "compile": "npm run build:client && npm run build:server"
   },
   "dependencies": {
     "@headlessui/vue": "^1.5.0",
-    "@heroicons/vue": "^1.0.5",
+    "@heroicons/vue": "^1.0.6",
     "@tailwindcss/aspect-ratio": "^0.4.0",
-    "@tailwindcss/forms": "^0.4.0",
+    "@tailwindcss/forms": "^0.5.0",
     "@tailwindcss/line-clamp": "^0.3.1",
     "@tailwindcss/typography": "^0.5.2",
-    "dayjs": "^1.10.7",
-    "lowdb": "^3.0.0",
+    "dayjs": "^1.11.0",
+    "koa": "^2.13.4",
+    "koa-static": "^5.0.0",
+    "lowdb": "^1.0.0",
     "ui-pr-socket": "1.0.0"
-  }
+  },
+  "devDependencies": {
+    "@types/koa": "^2.13.4",
+    "@types/koa-static": "^4.0.2",
+    "@types/lowdb": "^1.0.11",
+    "@types/node": "^16.11.9",
+    "@vitejs/plugin-vue": "^1.9.4",
+    "@vue/compiler-sfc": "^3.2.22",
+    "@vue/eslint-config-prettier": "^6.0.0",
+    "@vue/eslint-config-typescript": "^9.1.0",
+    "concurrently": "^6.4.0",
+    "mitt": "^3.0.0",
+    "rimraf": "^3.0.2",
+    "sass": "^1.43.4",
+    "tailwindcss": "^3.0.23",
+    "ts-node": "^10.7.0",
+    "typescript": "^4.6.2",
+    "vite": "^2.6.14",
+    "vue": "^3.2.31",
+    "vue-router": "^4.0.14",
+    "vue-tsc": "^0.33.2"
+  },
+  "keywords": [
+    "vue3",
+    "vite2",
+    "koa2"
+  ]
 }

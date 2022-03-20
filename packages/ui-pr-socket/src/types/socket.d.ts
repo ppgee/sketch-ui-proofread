@@ -2,7 +2,7 @@ import { Socket } from "socket.io"
 import { SOCKET_EVENTS, SERVER_EMIT_EVENTS, CLIENT_EMIT_EVENTS } from "../shared/events"
 
 type EmptyFunction = () => void
-type ErrorReasonFunction = (reason) => void
+type ErrorReasonFunction = (reason: string) => void
 type BaseSocketFunction = (socket: ServerSocket) => void
 type BaseIdRoomFunction = (options: { id: string, room: string }) => void
 type ThrowMsgFunction = (params: SocketThrowMsg) => void
@@ -18,6 +18,7 @@ export type roomFormatter = {
 export type RoomList = {
   [key: string]: {
     id: string,
+    socketId: string,
     online: boolean
   }
 }
@@ -27,7 +28,7 @@ export type SocketThrowMsg = {
 }
 
 export interface SocketFileOptions {
-  buffer: Buffer,
+  buffer: ArrayBuffer,
   fileFormat: string
 }
 
@@ -87,6 +88,7 @@ type SocketClientBaseOptions = {
   clientDisconnectedFn?: EmptyFunction
   outRoomSuccess?: BaseIdRoomFunction
   outRoomFailure?: ThrowMsgFunction
+  sendImageFail?: ThrowMsgFunction
 }
 type SocketClientExtractOptions = {
   socketFrom: Extract<SocketFrom, 'plugin'>

@@ -1,5 +1,7 @@
 {
   "compilerOptions": {
+    "experimentalDecorators": true,
+    "strict": true,
     "target": "esnext",
     "moduleResolution": "node",
     "typeRoots": [

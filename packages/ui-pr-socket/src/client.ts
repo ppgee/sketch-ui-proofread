@@ -14,7 +14,7 @@ class SocketClient {
       query: {
         id,
         socketFrom,
-      }
+      },
     })
 
     this.initSocket(options)
@@ -70,10 +70,14 @@ class SocketClient {
     })
   }
   initDeviceSocket(options: SocketClientOptions) {
-    const { getRoomsFn } = options
+    const { getRoomsFn, sendImageFail } = options
     this.io.on(SERVER_EMIT_EVENTS.LIST_ROOMS, (rooms) => {
       printLog('获取房间', rooms.join(','))
       getRoomsFn && getRoomsFn(rooms)
+    })
+    this.io.on(SERVER_EMIT_EVENTS.GET_IMAGE_FAIL, (params) => {
+      printLog('【传图端】获取不到插件')
+      sendImageFail && sendImageFail(params)
     })
   }
   initPluginSocket(options: SocketClientOptions) {

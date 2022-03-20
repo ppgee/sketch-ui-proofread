@@ -38,10 +38,14 @@ export class HelpWindow {
       const imageLayer = initImageLayer({
         imageUrl,
         imgScale,
-        selectedPage
+        selectedPage,
+        style: {
+          opacity: .7
+        }
       })
-       selectedPage.layers.unshift(imageLayer)
+      selectedPage.layers.push(imageLayer)
     } catch (error) {
+      console.log('【添加图片失败】')
       console.error(error)
     }
 
@@ -69,16 +73,20 @@ export class HelpWindow {
     // print a message web the page loads
     // @ts-ignore
     webContents.on(SKETCH_EVENT.WEBVIEW_DID_LOAD, () => {
-      this.pushMessage('UI loaded!')
+      this.pushMessage('插件加载成功')
     })
 
     // @ts-ignore
-    webContents.on(SKETCH_EVENT.CLIENT_SEND_IMAGE, this.pushImageToPage)
+    webContents.on(SKETCH_EVENT.CLIENT_SEND_IMAGE, (...args) => {
+      const [imageBase64, imgScale] = args
+      this.pushMessage(`插件接收到图片`)
+      this.pushImageToPage(imageBase64, imgScale)
+    })
 
     // @ts-ignore
     webContents.on(SKETCH_EVENT.CLIENT_LOG, (...arg) => {
       console.log(arg.join(','))
-      // this.pushMessage
+      // this.pushMessage(arg.join(','))
     })
 
     this.browserWindow.loadURL(getWebviewUrl())

@@ -14,14 +14,45 @@
           >{{ tab.name }}</button>
         </Tab>
       </TabList>
-      <TabPanels class="mt-2" v-slot="{ selectedIndex }">
+      <TabPanels class="mt-2">
         <TabPanel
           :class="[
             'bg-white rounded-xl p-3',
             'focus:outline-none focus:ring-2 ring-offset-2 ring-offset-blue-400 ring-white ring-opacity-60',
           ]"
         >
-          <section>{{ tabList[0].name }}</section>
+          <section class="w-full px-2 py-4">
+            <div class="relative">
+              <button
+                type="button"
+                :class="[
+                  'inline-block w-full py-4 text-sm leading-5 font-medium text-white rounded-lg',
+                  'focus:outline-none focus:ring-2 ring-offset-2 ring-offset-blue-400 ring-white ring-opacity-60',
+                  'bg-blue-600'
+                ]"
+                @click="clearImgList"
+              >清空列表</button>
+            </div>
+            <div
+              v-show="imgList.length"
+              class="relative grid gap-8 bg-white px-1.5 py-7 lg:grid-cols-2"
+            >
+              <div
+                v-for="image in imgList"
+                :key="image.url"
+                class="flex items-center p-2 -m-3 transition duration-150 ease-in-out rounded-lg hover:bg-gray-50 focus:outline-none focus-visible:ring focus-visible:ring-orange-500 focus-visible:ring-opacity-50"
+              >
+                <div
+                  class="flex items-center justify-center flex-shrink-0 w-16 h-16 text-white sm:h-12 sm:w-12"
+                >
+                  <img class="inline-block w-full h-full object-contain" :src="image.url" />
+                </div>
+                <div class="ml-4">
+                  <p class="text-sm text-gray-500">接收时间：{{ image.time }}</p>
+                </div>
+              </div>
+            </div>
+          </section>
         </TabPanel>
         <TabPanel
           :key="tabList[1].name"
@@ -37,6 +68,7 @@
                 <input
                   type="url"
                   class="mt-2 block w-full"
+                  :disabled="isJoined"
                   v-model="storeSocketInfo.server"
                   placeholder="可向开发人员索取服务器地址"
                 />
@@ -46,6 +78,7 @@
                 <input
                   type="url"
                   class="mt-2 block w-full"
+                  :disabled="isJoined"
                   v-model="storeSocketInfo.room"
                   placeholder="设置个性化名称以快速查找并传图"
                 />
@@ -60,7 +93,7 @@
                       : '',
                   ]"
                   @click="createSocketConnection"
-                >保存</button>
+                >{{ isJoined ? '连接成功' : '保存' }}</button>
               </label>
             </div>
           </section>
@@ -95,6 +128,8 @@ let tabList = ref([
 let {
   isJoined,
   storeSocketInfo,
+  imgList,
+  clearImgList,
   createSocketConnection
 } = useSocket()
 

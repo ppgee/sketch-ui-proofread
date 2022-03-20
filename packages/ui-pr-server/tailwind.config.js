@@ -1,11 +1,8 @@
-const defaultTheme = require("tailwindcss/defaultTheme");
+const defaultTheme = require('tailwindcss/defaultTheme')
 
 module.exports = {
   content: [
-    `components/**/*.{vue,js}`,
-    `layouts/**/*.vue`,
-    `pages/**/*.vue`,
-    `plugins/**/*.{js,ts}`
+    './client/**/*.{vue,js,ts,jsx,tsx}',
   ],
   theme: {
     extend: {
@@ -23,4 +20,4 @@ module.exports = {
     require("@tailwindcss/line-clamp"),
     require("@tailwindcss/aspect-ratio"),
   ],
-};
+}
