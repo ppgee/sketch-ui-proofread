@@ -15,6 +15,7 @@ const manifest = {
   description,
   "compatibleVersion": "52.1",
   "disableCocoaScriptPreprocessor": true,
+  "icon": "logo.png",
   "commands": [
     {
       "name": "📑 打开接收端",

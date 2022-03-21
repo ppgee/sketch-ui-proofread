@@ -54,7 +54,7 @@ export default defineConfig(({ mode }) => {
     },
     build: {
       emptyOutDir: true,
-      minify: false,
+      minify: true,
       outDir: resolve(__dirname, PLUGIN_PREFIX),
       rollupOptions: {
         input: inputOptions,
@@ -101,6 +101,10 @@ export default defineConfig(({ mode }) => {
             dest: `${PLUGIN_PREFIX}/Sketch`,
             rename: 'manifest.json',
             transform: () => JSON.stringify(manifest, null, 2)
+          },
+          {
+            src: resolve(__dirname, 'assets/logo.png'),
+            dest: `${PLUGIN_PREFIX}/Resources`
           }
         ]
       }),
