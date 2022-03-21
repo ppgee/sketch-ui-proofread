@@ -9,6 +9,7 @@ type ThrowMsgFunction = (params: SocketThrowMsg) => void
 type ListRoomFunction = (rooms: roomFormatter[]) => void
 type RoomNameFunction = (roomName: string) => void
 type FileFunction = (options: SocketFileOptions) => void
+type BufferFunction = (buffer: ArrayBuffer) => void
 export type DBActionRoomFunction = (params: { action: 'add' | 'remove' | 'update', key: keyof RoomList, value: RoomList[keyof RoomList] }) => Promise<RoomList>
 
 export type roomFormatter = {
@@ -37,7 +38,7 @@ export type ServerSocket = Socket<ServerOnEvents, ServerEmitEvents, InterServerE
 export interface ServerEmitEvents {
   [SERVER_EMIT_EVENTS.CREATED_ROOM]: RoomNameFunction
   [SERVER_EMIT_EVENTS.CREATED_ROOM_FAIL]: ThrowMsgFunction
-  [SERVER_EMIT_EVENTS.SEND_IMAGE]: FileFunction
+  [SERVER_EMIT_EVENTS.SEND_IMAGE]: BufferFunction
   [SERVER_EMIT_EVENTS.GET_IMAGE_FAIL]: ThrowMsgFunction
   [SERVER_EMIT_EVENTS.LIST_ROOMS]: ListRoomFunction
   [SERVER_EMIT_EVENTS.OUT_ROOM]: ThrowMsgFunction
@@ -93,7 +94,7 @@ type SocketClientBaseOptions = {
 type SocketClientExtractOptions = {
   socketFrom: Extract<SocketFrom, 'plugin'>
   roomName: string
-  getServerImgFn?: FileFunction
+  getServerImgFn?: BufferFunction
   createRoomSuccess?: RoomNameFunction
   createRoomFailure?: ThrowMsgFunction
 } | {
