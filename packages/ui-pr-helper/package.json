@@ -2,7 +2,6 @@
   "name": "ui-pr-helper",
   "version": "1.0.0",
   "description": "移动端对稿工具，减少对稿链路，快速匹配对稿，早点下班☕️ ",
-  "private": false,
   "keywords": [
     "sketch",
     "vite",
@@ -13,11 +12,17 @@
   "homepage": "https://github.com/ppgee/sketch-ui-helper#readme",
   "license": "ISC",
   "scripts": {
+    "precommit": "lint-staged",
     "dev": "vite",
     "prebuild": "rm -rf ui-pr-helper.sketchplugin",
     "build": "vue-tsc --noEmit && vite build",
     "build:watch": "vue-tsc --noEmit && vite build --mode dev --watch",
     "preview": "vite preview"
+  },
+  "lint-staged": {
+    "*.{ts,tsx,js,jsx}": [
+      "eslint"
+    ]
   },
   "repository": {
     "type": "git",
@@ -41,6 +46,7 @@
     "@types/node": "^17.0.18",
     "@vitejs/plugin-vue": "^2.2.0",
     "autoprefixer": "^10.4.4",
+    "lint-staged": "^12.3.7",
     "rollup-plugin-copy": "^3.4.0",
     "rollup-plugin-delete": "^2.0.0",
     "sketch-types": "^1.4.3",

@@ -2,13 +2,26 @@
   "name": "root",
   "private": true,
   "devDependencies": {
+    "@commitlint/cli": "^16.2.3",
+    "@commitlint/config-conventional": "^16.2.1",
+    "cz-customizable": "^6.3.0",
+    "husky": "^7.0.4",
     "lerna": "^4.0.0"
   },
   "workspaces": [
     "packages/*"
   ],
+  "config": {
+    "commitizen": {
+      "path": "./node_modules/cz-customizable"
+    },
+    "cz-customizable": {
+      "config": "./.cz-config.js"
+    }
+  },
   "scripts": {
     "clean": "lerna clean && rm -rf ./node_modules",
-    "test": "echo \"Error: run tests from root\" && exit 1"
+    "test": "echo \"Error: run tests from root\" && exit 1",
+    "prepare": "husky install"
   }
 }

@@ -1,14 +1,19 @@
 {
   "name": "ui-pr-server",
-  "private": false,
   "version": "0.0.1",
   "scripts": {
+    "precommit": "lint-staged",
     "dev:client": "vite",
     "dev:server": "ts-node server/server.ts",
     "dev": "concurrently -n vue,server npm:dev:client npm:dev:server",
     "build:client": "vue-tsc --noEmit -p client && vite build",
     "build:server": "rimraf build && tsc",
     "compile": "npm run build:client && npm run build:server"
+  },
+  "lint-staged": {
+    "*.{ts,tsx,js,jsx}": [
+      "eslint"
+    ]
   },
   "dependencies": {
     "@headlessui/vue": "^1.5.0",
@@ -33,6 +38,7 @@
     "@vue/eslint-config-prettier": "^6.0.0",
     "@vue/eslint-config-typescript": "^9.1.0",
     "concurrently": "^6.4.0",
+    "lint-staged": "^12.3.7",
     "mitt": "^3.0.0",
     "rimraf": "^3.0.2",
     "sass": "^1.43.4",

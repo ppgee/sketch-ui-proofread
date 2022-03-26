@@ -13,12 +13,12 @@
   "typings": "server/index.d.ts",
   "exports": {
     "./client": {
-       "require": "./client/index.cjs",
-       "import": "./client/index.mjs"
+      "require": "./client/index.cjs",
+      "import": "./client/index.mjs"
     },
     "./server": {
-       "require": "./server/index.cjs",
-       "import": "./server/index.mjs"
+      "require": "./server/index.cjs",
+      "import": "./server/index.mjs"
     }
   },
   "directories": {
@@ -33,10 +33,16 @@
     "url": "git+https://github.com/ppgee/sketch-ui-helper.git"
   },
   "scripts": {
+    "precommit": "lint-staged",
     "dev": "rollup -c -w",
     "prebuild": "rm -rf server client",
     "build": "rollup -c",
     "test": "echo \"Error: run tests from root\" && exit 1"
+  },
+  "lint-staged": {
+    "*.{ts,tsx,js,jsx}": [
+      "eslint"
+    ]
   },
   "bugs": {
     "url": "https://github.com/ppgee/sketch-ui-helper/issues"
@@ -44,6 +50,7 @@
   "devDependencies": {
     "@types/node": "^17.0.18",
     "esbuild": "^0.14.21",
+    "lint-staged": "^12.3.7",
     "rollup": "^2.67.2",
     "rollup-plugin-dts": "^4.1.0",
     "rollup-plugin-esbuild": "^4.8.2",
