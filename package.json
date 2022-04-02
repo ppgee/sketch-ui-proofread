@@ -1,5 +1,13 @@
 {
   "name": "root",
+  "description": "sketch 对稿叠图工具",
+  "keywords": [
+    "sketch",
+    "vite",
+    "typescript",
+    "vue",
+    "koa"
+  ],
   "private": true,
   "devDependencies": {
     "@commitlint/cli": "^16.2.3",
